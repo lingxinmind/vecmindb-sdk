@@ -4,7 +4,47 @@ The official SDK for [VecminDB](https://github.com/vecmindb) — The Sovereign M
 
 > Stop letting your AI Agents hallucinate from memory rot. VecminDB naturally decays outdated memories, distills knowledge via PCA, and provides 100% Air-Gapped cryptographic data sovereignty.
 
-## Installation
+## Deployment & Installation
+
+VecminDB can be run via Docker or as optimized, standalone pre-compiled native binary packages. No local compilers, dependencies, or Python runtimes are needed.
+
+### Method A: Docker Deployment (All Platforms - Windows, macOS, Linux)
+The fastest way to spin up VecminDB with automatic in-database bilingual embedding support.
+
+```bash
+docker run -d --name vecmindb-trial -p 5520:5520 ghcr.io/slqyahoo123/vecmindb:1.0.0-beta
+```
+
+---
+
+### Method B: Pre-Compiled Native Binary Bundles (Zero-Docker / Zero-Python)
+Ideal for high-performance, air-gapped private cloud servers. Download the appropriate package from our [Releases](https://github.com/slqyahoo123/vecmindb-sdk/releases) page:
+
+*   **Windows (AMD64)**:
+    Download `vecmindb-1.0.0-beta-x86_64-pc-windows-msvc.zip`. Extract the ZIP archive, open Command Prompt or PowerShell in the directory, and run:
+    ```cmd
+    .\vecmindb-server.exe
+    ```
+*   **macOS (Apple Silicon M1/M2/M3)**:
+    Download `vecmindb-1.0.0-beta-aarch64-apple-darwin.tar.gz`. Open Terminal, extract and run:
+    ```bash
+    tar -xzf vecmindb-1.0.0-beta-aarch64-apple-darwin.tar.gz
+    cd vecmindb-1.0.0-beta-aarch64-apple-darwin
+    ./vecmindb-server
+    ```
+*   **Linux (AMD64)**:
+    Download `vecmindb-offline-linux-amd64.tar.gz`. Extract and run:
+    ```bash
+    tar -xzf vecmindb-offline-linux-amd64.tar.gz
+    cd vecmindb-offline-linux-amd64
+    ./vecmindb-server
+    ```
+
+---
+
+## SDK Quickstart
+
+First, install the target client SDK:
 
 ```bash
 # Install core client
@@ -15,13 +55,6 @@ pip install vecmindb[langchain]
 
 # Install with CrewAI integration
 pip install vecmindb[crewai]
-```
-
-## Quickstart
-
-Start the local VecminDB engine:
-```bash
-docker run -d --name vecmindb-trial -p 5520:5520 vecmindb/vecmindb:latest
 ```
 
 ### Using with LangChain
