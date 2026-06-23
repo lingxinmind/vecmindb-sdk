@@ -612,6 +612,7 @@ class VecminClient:
         sovereignty_token: Optional[str] = None,
         model_id: Optional[str] = None,
         source: str = "sdk",
+        is_factual: bool = False,
         **kw,
     ) -> str:
         """Store a memory via the MCP ``store_memory`` tool."""
@@ -629,6 +630,7 @@ class VecminClient:
                     "source": source,
                     "sovereignty_token": effective_token,
                     "model_id": effective_model_id,
+                    "is_factual": is_factual,
                 },
             },
             "id": 1,

@@ -341,6 +341,7 @@ class McpClient:
         *,
         agent_id: str = "default",
         source: str = "sdk",
+        is_factual: bool = False,
     ) -> Any:
         """Store a memory via the ``store_memory`` MCP tool.
 
@@ -348,13 +349,14 @@ class McpClient:
             content: Text content to remember.
             agent_id: Agent or session identifier.
             source: Origin of the memory.
+            is_factual: If true, exempts this memory from biological forgetting.
 
         Returns:
             Tool result.
         """
         return await self.call_tool(
             "store_memory",
-            {"agent_id": agent_id, "content": content, "source": source},
+            {"agent_id": agent_id, "text": content, "source": source, "is_factual": is_factual},
         )
 
     async def search_memory(
@@ -504,9 +506,9 @@ class SyncMcpClient:
         response.raise_for_error()
         return response.result
 
-    def store_memory(self, content: str, *, agent_id: str = "default", source: str = "sdk") -> Any:
+    def store_memory(self, content: str, *, agent_id: str = "default", source: str = "sdk", is_factual: bool = False) -> Any:
         """Store a memory via the ``store_memory`` MCP tool."""
-        return self.call_tool("store_memory", {"agent_id": agent_id, "content": content, "source": source})
+        return self.call_tool("store_memory", {"agent_id": agent_id, "text": content, "source": source, "is_factual": is_factual})
 
     def search_memory(self, query: str, *, agent_id: str = "default", top_k: int = 5) -> Any:
         """Search memories via the ``search_memory`` MCP tool."""

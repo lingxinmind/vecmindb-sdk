@@ -61,13 +61,14 @@ def get_embedding(text: str) -> List[float]:
 
 
 @tool_decorator()
-def store_memory(agent_id: str, content: str, source: str = "mcp_session") -> str:
+def store_memory(agent_id: str, content: str, source: str = "mcp_session", is_factual: bool = False) -> str:
     """Store an important memory, fact, or instruction for the AI Agent into VecminDB long-term memory.
 
     Args:
         agent_id: A unique identifier for the current agent or session.
         content: The text content to remember (e.g., "User prefers dark mode").
         source: Where this memory came from.
+        is_factual: If true, exempts this memory from biological forgetting.
     """
     vector = get_embedding(content)
     metadata = {
@@ -75,6 +76,8 @@ def store_memory(agent_id: str, content: str, source: str = "mcp_session") -> st
         "content": content,
         "source": source,
     }
+    if is_factual:
+        metadata["persistent_anchor"] = True
     try:
         doc_id = vecmin.insert("agent_memory_mcp", vector=vector, metadata=metadata)
         return f"Successfully stored memory with ID: {doc_id}"
