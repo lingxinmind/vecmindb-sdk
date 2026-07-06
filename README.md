@@ -99,10 +99,14 @@ agent = Agent(
 
 ## Why VecminDB?
 
-*   **100% Offline**: Built-in ONNX embedding model. Your data never leaves your VPC.
-*   **Biological Forgetting (LTSM)**: Old, unused memories naturally decay over time to prevent context pollution.
-*   **Knowledge Distillation**: Fuses semantic clusters into dense abstract centroids automatically.
-*   **Sovereignty Isolation**: Agents are cryptographically isolated using HMAC-SHA256 signature chains.
+Unlike generic vector databases that act as static drives, VecminDB acts as a cognitive memory operating system with native lifecycle management and cryptographic isolation:
+
+*   **Biological Forgetting (LTSM)**: Episodic memories decay dynamically following $W(t) = \exp(-\lambda \times \Delta t)$ with automatic 90-day semantic pruning (`let semantic_prune_threshold_secs = 90 * 86400;` on disk). Frequently accessed memories persist; transient noise is permanently retired.
+*   **Welford & PCA Memory Distillation**: Fuses decaying memory clusters into stable Abstract Centroids using real-time Welford online variance and DP-Federated PCA. Storage converges and scales logarithmically, locking in long-term TCO budgets.
+*   **3-Sigma Sentinel Guard**: Performs real-time anomaly detection and adversarial injection pruning. Evaluates cosine outlier distance with dynamic cutoffs: $\text{Threshold} = \max(\text{Mean}_s - 3 \times \text{Std}_s, 0.7)$.
+*   **Sovereign Federation**: Shares collective intelligence across multiple agent domains or VPCs without raw data leak. Fuses PCA Candidate Centroids with differential privacy and a 10% principal bias: $\vec{v}_{\text{centroid}} = \text{Mean}_{\text{global}} + P_0 \times 0.1$.
+*   **Raft Consensus & 1024-Bucket Anti-Entropy**: Combines strong consensus replication with self-healing topology. Employs monotonic lock validation (`pub fencing_token: u64`) and an adaptive sync cap: `(resolution * 2).min(1024)`.
+*   **100% Air-Gapped Single-Binary**: Built-in BGE-M3 ONNX runtime. No Python, PyTorch, or external embedding API keys needed. Bounded tightly to machine-level HAI hardware fingerprints.
 
 ---
 **Enterprise Licensing**: For multi-node SOC-2 compliant deployments, please purchase subscriptions or contact us at `sulingqi@hotmail.com`.

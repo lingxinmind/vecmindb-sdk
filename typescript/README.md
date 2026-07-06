@@ -2,6 +2,8 @@
 
 Official TypeScript SDK for [VecminDB](https://lingxinmind.com) — the high-performance vector database for AI agents.
 
+⚠️ **License Note**: VecminDB is a commercial Cognitive Vector Database. The Free Tier supports up to 5 agents and 100K vectors/agent forever. For enterprise scale-out or clusters, please visit our official website to register and obtain a license key: [https://lingxinmind.com](https://lingxinmind.com).
+
 ## Installation
 
 ```bash
