@@ -1,8 +1,10 @@
 # VecminDB SDK
 
-The official SDK for [VecminDB](https://vecmindb.com) — The Sovereign Memory OS for AI Agents.
+The official SDK for [VecminDB](https://lingxinmind.com) — The Sovereign Memory OS for AI Agents.
 
 > Stop letting your AI Agents hallucinate from memory rot. VecminDB naturally decays outdated memories, distills knowledge via PCA, and provides 100% Air-Gapped cryptographic data sovereignty.
+
+⚠️ **License Note**: VecminDB is a commercial Cognitive Vector Database. The Free Tier supports up to 5 agents and 100K vectors/agent forever. For enterprise scale-out or clusters, please visit our official website to register and obtain a license key: [https://lingxinmind.com](https://lingxinmind.com).
 
 ## Deployment & Installation
 
@@ -22,7 +24,7 @@ docker run -d --name vecmindb-trial -p 5520:5520 ghcr.io/lingxinmind/vecmindb:la
 ---
 
 ### Method B: Pre-Compiled Native Binary Bundles (Zero-Docker / Zero-Python)
-Ideal for high-performance, air-gapped private cloud servers. Download the appropriate package from our official [Downloads](https://vecmindb.com/downloads) portal:
+Ideal for high-performance, air-gapped private cloud servers. Download the appropriate package from our official website [Downloads](https://lingxinmind.com) portal:
 
 *   **Windows (AMD64)**:
     Download `vecmindb-1.0.0-beta-x86_64-pc-windows-msvc.zip`. Extract the ZIP archive, open Command Prompt or PowerShell in the directory, and run:
@@ -103,4 +105,4 @@ agent = Agent(
 *   **Sovereignty Isolation**: Agents are cryptographically isolated using HMAC-SHA256 signature chains.
 
 ---
-**Enterprise Licensing**: For multi-node SOC-2 compliant deployments, contact `support@vecmindb.com`.
+**Enterprise Licensing**: For multi-node SOC-2 compliant deployments, please purchase subscriptions or contact us at `sulingqi@hotmail.com`.

@@ -1,6 +1,7 @@
 {
   "name": "@vecmindb/sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "homepage": "https://lingxinmind.com",
   "description": "Official TypeScript SDK for VecminDB vector database",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
