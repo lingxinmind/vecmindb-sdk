@@ -23,6 +23,7 @@ from .exceptions import (
     VecminError,
     AuthenticationError,
     PermissionError,
+    PaymentRequiredError,
     NotFoundError,
     BadRequestError,
     ConflictError,
@@ -74,7 +75,7 @@ from .memory import (
 )
 from typing import Optional
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 
 def connect(
@@ -110,6 +111,7 @@ __all__ = [
     "VecminError",
     "AuthenticationError",
     "PermissionError",
+    "PaymentRequiredError",
     "NotFoundError",
     "BadRequestError",
     "ConflictError",

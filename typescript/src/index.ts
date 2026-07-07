@@ -30,6 +30,7 @@ export {
   VecminError,
   AuthenticationError,
   PermissionError,
+  PaymentRequiredError,
   NotFoundError,
   RateLimitError,
   ServerError,

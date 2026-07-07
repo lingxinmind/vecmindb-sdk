@@ -47,6 +47,13 @@ class PermissionError(VecminError):
     """
 
 
+class PaymentRequiredError(VecminError):
+    """Raised when subscription payment or a valid license key is required (HTTP 402).
+
+    To obtain or renew a license key, please visit: https://lingxinmind.com
+    """
+
+
 # ---------------------------------------------------------------------------
 # Client-side errors
 # ---------------------------------------------------------------------------
@@ -102,6 +109,7 @@ class TimeoutError(VecminError):  # noqa: A001 – intentional shadow of builtin
 _STATUS_CODE_TO_EXCEPTION = {
     400: BadRequestError,
     401: AuthenticationError,
+    402: PaymentRequiredError,
     403: PermissionError,
     404: NotFoundError,
     409: ConflictError,

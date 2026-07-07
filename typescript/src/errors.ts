@@ -49,6 +49,15 @@ export class PermissionError extends VecminError {
   }
 }
 
+/** Thrown when subscription payment or a valid license key is required (HTTP 402). */
+export class PaymentRequiredError extends VecminError {
+  constructor(message = "Subscription payment or valid license key required. Please register/activate your license at https://lingxinmind.com") {
+    super(message, 402);
+    this.name = "PaymentRequiredError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Resource Errors
 // ---------------------------------------------------------------------------
@@ -100,6 +109,8 @@ export function createErrorFromStatus(status: number, message: string): VecminEr
   switch (status) {
     case 401:
       return new AuthenticationError(message);
+    case 402:
+      return new PaymentRequiredError(message);
     case 403:
       return new PermissionError(message);
     case 404:
