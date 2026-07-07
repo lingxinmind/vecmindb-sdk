@@ -24,7 +24,7 @@ docker run -d --name vecmindb-trial -p 5520:5520 ghcr.io/lingxinmind/vecmindb:la
 ---
 
 ### Method B: Pre-Compiled Native Binary Bundles (Zero-Docker / Zero-Python)
-Ideal for high-performance, air-gapped private cloud servers. Download the appropriate package from our official website [Downloads](https://lingxinmind.com) portal:
+Ideal for high-performance, air-gapped on-premise or private cloud servers. Download the appropriate package from our official website [Downloads](https://lingxinmind.com) portal:
 
 *   **Windows (AMD64)**:
     Download `vecmindb-1.0.0-beta-x86_64-pc-windows-msvc.zip`. Extract the ZIP archive, open Command Prompt or PowerShell in the directory, and run:
