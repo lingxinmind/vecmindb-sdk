@@ -3,7 +3,7 @@ requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vecmindb-sdk"
+name = "vecmindb"
 version = "1.0.0-beta"
 description = "Python SDK for VecminDB - High-performance vector database HTTP client"
 authors = [{email = "sulingqi@hotmail.com", name = "VecminDB Team"}]
