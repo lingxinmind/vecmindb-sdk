@@ -4,7 +4,9 @@ The official SDK for [VecminDB](https://lingxinmind.com) — The Sovereign Memor
 
 > Stop letting your AI Agents hallucinate from memory rot. VecminDB naturally decays outdated memories, distills knowledge via PCA, and provides 100% Air-Gapped cryptographic data sovereignty.
 
-⚠️ **License Note**: VecminDB is a commercial Cognitive Vector Database. The Free Tier supports up to 5 agents and 100K vectors/agent forever. For enterprise scale-out or clusters, please visit our official website to register and obtain a license key: [https://lingxinmind.com](https://lingxinmind.com).
+⚠️ **License & Boundary Note**:
+*   **SDK (This Repository)**: The client libraries (Python & TypeScript) hosted in this repository are **open-source** under the **MIT License**. We welcome community contributions, integrations, and pull requests!
+*   **VecminDB Server (Pre-compiled Binaries & Docker)**: The core database server is **proprietary commercial software** protected by copyright, patent, and trade secret laws, governed by the [VecminDB Proprietary Software License Agreement](https://github.com/lingxinmind/vecminDB/blob/main/LICENSE). The Free Tier supports up to 5 agents and 100K vectors/agent. For enterprise scale-out or clusters, please visit our official website to register and obtain a commercial license: [https://lingxinmind.com](https://lingxinmind.com).
 
 ## Deployment & Installation
 
