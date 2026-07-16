@@ -44,6 +44,15 @@ if [ -d "typescript" ]; then
     fi
 fi
 
+# Rust Version Bump
+if [ -d "rust" ]; then
+    echo "  - Updating Rust crate configuration..."
+    if [ -f "rust/Cargo.toml" ]; then
+        # Handle Cargo.toml version field
+        sed -i "s/^version\s*=\s*\".*\"/version = \"$VERSION\"/" rust/Cargo.toml
+    fi
+fi
+
 # --------------------------------------------------------
 # 2. Purge Build Caches
 # --------------------------------------------------------
@@ -55,6 +64,10 @@ fi
 
 if [ -d "typescript" ]; then
     rm -rf typescript/dist/
+fi
+
+if [ -d "rust" ]; then
+    rm -rf rust/target/
 fi
 
 # --------------------------------------------------------
@@ -81,6 +94,17 @@ if [ -d "typescript" ]; then
     cd ..
 fi
 
+# --------------------------------------------------------
+# 5. Verify Rust SDK Stub
+# --------------------------------------------------------
+if [ -d "rust" ]; then
+    echo "🏗️ Step 5: Verifying Rust SDK (Cargo package check)..."
+    cd rust
+    cargo check
+    cargo package --allow-dirty
+    cd ..
+fi
+
 echo "=========================================================="
 echo "✨ Release compilation completed successfully for version: $VERSION"
 echo "=========================================================="
@@ -91,4 +115,7 @@ echo "     cd python && python3 -m twine upload dist/*"
 echo ""
 echo "  2. Publish TypeScript SDK to NPM:"
 echo "     cd typescript && npm publish"
+echo ""
+echo "  3. Publish Rust SDK to crates.io:"
+echo "     cd rust && cargo publish"
 echo "=========================================================="
