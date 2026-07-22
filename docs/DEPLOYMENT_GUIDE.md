@@ -193,7 +193,7 @@ curl http://localhost:5520/license/status
 # Note the instance ID from the response
 
 # 2. On a connected machine, provide the instance ID to obtain a key
-# Contact: licensing@vecmindb.com
+# Contact: contact@lingxinmind.com
 
 # 3. Activate with the key
 curl -X POST http://localhost:5520/license/activate \

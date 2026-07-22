@@ -29,15 +29,15 @@ docker run -d --name vecmindb-trial -p 5520:5520 ghcr.io/lingxinmind/vecmindb:la
 Ideal for high-performance, air-gapped on-premise or private cloud servers. Download the appropriate package from our official website [Downloads](https://lingxinmind.com) portal:
 
 *   **Windows (AMD64)**:
-    Download `vecmindb-1.0.0-beta-x86_64-pc-windows-msvc.zip`. Extract the ZIP archive, open Command Prompt or PowerShell in the directory, and run:
+    Download `vecmindb-1.0.1-x86_64-pc-windows-msvc.zip`. Extract the ZIP archive, open Command Prompt or PowerShell in the directory, and run:
     ```cmd
     .\vecmindb-server.exe
     ```
 *   **macOS (Apple Silicon M1/M2/M3)**:
-    Download `vecmindb-1.0.0-beta-aarch64-apple-darwin.tar.gz`. Open Terminal, extract and run:
+    Download `vecmindb-1.0.1-aarch64-apple-darwin.tar.gz`. Open Terminal, extract and run:
     ```bash
-    tar -xzf vecmindb-1.0.0-beta-aarch64-apple-darwin.tar.gz
-    cd vecmindb-1.0.0-beta-aarch64-apple-darwin
+    tar -xzf vecmindb-1.0.1-aarch64-apple-darwin.tar.gz
+    cd vecmindb-1.0.1-aarch64-apple-darwin
     ./vecmindb-server
     ```
 *   **Linux (AMD64)**:
@@ -111,4 +111,4 @@ Unlike generic vector databases that act as static drives, VecminDB acts as a co
 *   **100% Air-Gapped Single-Binary**: Built-in BGE-M3 ONNX runtime. No Python, PyTorch, or external embedding API keys needed. Bounded tightly to machine-level HAI hardware fingerprints.
 
 ---
-**Enterprise Licensing**: For multi-node SOC-2 compliant deployments, please purchase subscriptions or contact us at `sulingqi@hotmail.com`.
+**Enterprise Licensing**: For multi-node SOC-2 compliant deployments, please purchase subscriptions or contact us at `contact@lingxinmind.com`.
