@@ -733,6 +733,7 @@ class VecminClient:
         metric_type: str = "Cosine",
         index_type: str = "HNSW",
         index_params: Optional[Dict[str, Any]] = None,
+        domain: Optional[str] = "general",
     ) -> bool:
         """Ensure a collection exists, creating it if necessary.
 
@@ -742,6 +743,7 @@ class VecminClient:
             metric_type: Distance metric.
             index_type: Index algorithm.
             index_params: Algorithm parameters.
+            domain: Cognitive factuality domain.
 
         Returns:
             ``True`` if the collection exists or was created.
@@ -755,6 +757,7 @@ class VecminClient:
             self.create_collection(
                 name, dimension=dimension, metric_type=metric_type,
                 index_type=index_type, index_params=index_params,
+                domain=domain,
             )
             return True
         except Exception:
