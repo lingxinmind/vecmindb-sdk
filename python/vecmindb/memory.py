@@ -34,20 +34,22 @@ class AgentMemoryManager:
 
     def mount_memory(
         self,
-        domain: str = "default",
+        collection_name: str = "agent_memory",
+        domain: Optional[str] = None,
         mode: str = "evolutionary",
         **kwargs,
     ) -> VecminMemorySpace:
         """Mount a cognitive memory space, ensuring the backing collection exists."""
         self.client.ensure_collection(
-            domain,
-            dimension=kwargs.get("dimension", 1536),
+            collection_name,
+            dimension=kwargs.get("dimension", 1024),
             metric_type=kwargs.get("metric_type", "Cosine"),
             index_type=kwargs.get("index_type", "HNSW"),
+            domain=domain or "general",
         )
         return VecminMemorySpace(
             client=self.client,
-            collection_name=domain,
+            collection_name=collection_name,
             agent_id=self.agent_id,
             sovereignty_token=self.sovereignty_token,
             model_id=self.model_id,
@@ -72,20 +74,22 @@ class AsyncAgentMemoryManager:
 
     async def mount_memory(
         self,
-        domain: str = "default",
+        collection_name: str = "agent_memory",
+        domain: Optional[str] = None,
         mode: str = "evolutionary",
         **kwargs,
     ) -> AsyncVecminMemorySpace:
         """Mount a cognitive memory space asynchronously, ensuring the backing collection exists."""
         await self.client.ensure_collection(
-            domain,
-            dimension=kwargs.get("dimension", 1536),
+            collection_name,
+            dimension=kwargs.get("dimension", 1024),
             metric_type=kwargs.get("metric_type", "Cosine"),
             index_type=kwargs.get("index_type", "HNSW"),
+            domain=domain or "general",
         )
         return AsyncVecminMemorySpace(
             client=self.client,
-            collection_name=domain,
+            collection_name=collection_name,
             agent_id=self.agent_id,
             sovereignty_token=self.sovereignty_token,
             model_id=self.model_id,
