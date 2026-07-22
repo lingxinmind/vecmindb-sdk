@@ -16,7 +16,7 @@ def main():
     print(f"=== VecminDB Cognitive Memory Evolution Example ===")
 
     try:
-        client = VecminClient(endpoint=endpoint)
+        client = VecminClient(base_url=endpoint)
         manager = AgentMemoryManager(
             client=client,
             agent_id="demo_agent_01",
