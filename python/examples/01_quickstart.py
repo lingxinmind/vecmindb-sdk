@@ -14,12 +14,12 @@ from vecmindb.memory import AgentMemoryManager
 
 
 def main():
-    endpoint = "http://localhost:5520"
+    base_url = "http://localhost:5520"
     print(f"=== VecminDB Python SDK Quickstart ===")
-    print(f"Connecting to VecminDB server at {endpoint}...")
+    print(f"Connecting to VecminDB server at {base_url}...")
 
     try:
-        client = VecminClient(endpoint=endpoint)
+        client = VecminClient(base_url=base_url)
         print("✓ Successfully initialized VecminClient.")
 
         # 2. Collection Creation (Only Name & Optional Domain Required!)
