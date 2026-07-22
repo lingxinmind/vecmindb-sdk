@@ -938,6 +938,40 @@ class AsyncVecminClient:
     # MCP Integration
     # ==================================================================
 
+    def _parse_mcp_response(self, data: Any) -> str:
+        """Helper to parse raw MCP response and extract plain text or JSON string."""
+        if not isinstance(data, dict):
+            return str(data)
+        
+        # 1. Strip top-level "data" wrapper if present
+        wrapped = data.get("data")
+        if isinstance(wrapped, dict):
+            data = wrapped
+
+        # 2. Extract JSON-RPC "result" node if present
+        if "result" in data:
+            rpc_result = data["result"]
+            if isinstance(rpc_result, dict):
+                data = rpc_result
+            else:
+                return str(rpc_result)
+
+        # 3. If data contains a "content" list, format the text items inside
+        if "content" in data:
+            content_node = data["content"]
+            if isinstance(content_node, list):
+                texts = []
+                for item in content_node:
+                    if isinstance(item, dict) and "text" in item:
+                        texts.append(str(item["text"]))
+                    else:
+                        texts.append(str(item))
+                return "\n".join(texts)
+            return str(content_node)
+
+        # 4. Fallback
+        return str(data)
+
     async def mcp_store_memory(
         self,
         content: str,
@@ -970,10 +1004,7 @@ class AsyncVecminClient:
             "id": 1,
         }
         data = await self._api_post("/mcp/message", payload, agent_id=effective_agent_id, model_id=effective_model_id, **kw)
-        result = data.get("data", data)
-        if isinstance(result, dict):
-            return result.get("content", result.get("result", str(result)))
-        return str(result)
+        return self._parse_mcp_response(data)
 
     async def mcp_search_memory(
         self,
@@ -1005,10 +1036,7 @@ class AsyncVecminClient:
             "id": 2,
         }
         data = await self._api_post("/mcp/message", payload, agent_id=effective_agent_id, model_id=effective_model_id, **kw)
-        result = data.get("data", data)
-        if isinstance(result, dict):
-            return result.get("content", result.get("result", str(result)))
-        return str(result)
+        return self._parse_mcp_response(data)
 
     async def mount_memory(
         self,
