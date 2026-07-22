@@ -369,38 +369,46 @@ class AsyncVecminClient:
             index_params=index_params,
         )
         data = await self._api_post("/collections", payload.model_dump(exclude_none=True), **kw)
-        return CollectionInfo(**data.get("data", data))
+        res_data = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(res_data, dict):
+            return CollectionInfo(name=name, dimension=dimension, metric_type=metric_type, index_type=index_type)
+        return CollectionInfo(**res_data)
 
     async def list_collections(self, **kw) -> List[CollectionInfo]:
         """List all collections (``GET /api/v1/collections``).
-
+ 
         Returns:
             List of collection metadata objects.
         """
         data = await self._api_get("/collections", **kw)
         items = data.get("data", data)
         if isinstance(items, list):
-            return [CollectionInfo(**c) for c in items]
-        return [CollectionInfo(**items)]
+            return [CollectionInfo(**c) for c in items if isinstance(c, dict)]
+        if isinstance(items, dict):
+            return [CollectionInfo(**items)]
+        return []
 
     async def get_collection(self, name: str, **kw) -> CollectionInfo:
         """Get collection details (``GET /api/v1/collections/{name}``).
-
+ 
         Args:
             name: Collection identifier.
-
+ 
         Returns:
             Collection metadata.
         """
         data = await self._api_get(f"/collections/{name}", **kw)
-        return CollectionInfo(**data.get("data", data))
+        res_data = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(res_data, dict):
+            return CollectionInfo(name=name)
+        return CollectionInfo(**res_data)
 
     async def delete_collection(self, name: str, **kw) -> VecminResponse:
         """Delete a collection (``DELETE /api/v1/collections/{name}``).
-
+ 
         Args:
             name: Collection identifier.
-
+ 
         Returns:
             Deletion confirmation.
         """
@@ -409,15 +417,18 @@ class AsyncVecminClient:
 
     async def get_collection_stats(self, name: str, **kw) -> CollectionStats:
         """Get collection statistics (``GET /api/v1/collections/{name}/stats``).
-
+ 
         Args:
             name: Collection identifier.
-
+ 
         Returns:
-            Statistical summary.
+            Collection statistics.
         """
         data = await self._api_get(f"/collections/{name}/stats", **kw)
-        return CollectionStats(**data.get("data", data))
+        res_data = data.get("data") if isinstance(data, dict) else None
+        if not isinstance(res_data, dict):
+            return CollectionStats(name=name)
+        return CollectionStats(**res_data)
 
     async def rebuild_collection_index(self, name: str, **kw) -> VecminResponse:
         """Rebuild the index for a collection (``POST /api/v1/collections/{name}/rebuild``).
