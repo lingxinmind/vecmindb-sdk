@@ -276,17 +276,19 @@ class VecminClient:
         metric_type: str = "Cosine",
         index_type: str = "HNSW",
         index_params: Optional[Dict[str, Any]] = None,
+        domain: Optional[str] = "general",
         **kw,
     ) -> CollectionInfo:
         """Create a new collection (``POST /api/v1/collections``)."""
         payload = CreateCollectionRequest(
             name=name, dimension=dimension, metric_type=metric_type,
             index_type=index_type, index_params=index_params,
+            domain=domain,
         )
         data = self._api_post("/collections", payload.model_dump(exclude_none=True), **kw)
         res_data = data.get("data") if isinstance(data, dict) else None
         if not isinstance(res_data, dict):
-            return CollectionInfo(name=name, dimension=dimension, metric_type=metric_type, index_type=index_type)
+            return CollectionInfo(name=name, dimension=dimension, metric_type=metric_type, index_type=index_type, domain=domain)
         return CollectionInfo(**res_data)
 
     def list_collections(self, **kw) -> List[CollectionInfo]:

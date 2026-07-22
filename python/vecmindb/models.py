@@ -45,6 +45,7 @@ class CreateCollectionRequest(BaseModel):
         metric_type: Distance metric (Cosine, L2, InnerProduct).
         index_type: Index algorithm (HNSW, IVF, Flat).
         index_params: Algorithm-specific parameters.
+        domain: Cognitive factuality domain (general, finance, etc.).
     """
 
     name: str
@@ -52,6 +53,7 @@ class CreateCollectionRequest(BaseModel):
     metric_type: str = "Cosine"
     index_type: str = "HNSW"
     index_params: Optional[Dict[str, Any]] = None
+    domain: Optional[str] = "general"
 
 
 class CollectionInfo(BaseModel):
@@ -65,6 +67,7 @@ class CollectionInfo(BaseModel):
         vector_count: Number of vectors stored.
         size_bytes: Approximate on-disk size.
         created_at: ISO-8601 creation timestamp.
+        domain: Cognitive domain of the collection.
     """
 
     name: str
@@ -74,6 +77,7 @@ class CollectionInfo(BaseModel):
     vector_count: int = 0
     size_bytes: int = 0
     created_at: str = ""
+    domain: Optional[str] = "general"
 
 
 class CollectionStats(BaseModel):
