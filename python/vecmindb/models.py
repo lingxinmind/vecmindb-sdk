@@ -49,7 +49,7 @@ class CreateCollectionRequest(BaseModel):
     """
 
     name: str
-    dimension: int = 1536
+    dimension: int = 1024
     metric_type: str = "Cosine"
     index_type: str = "HNSW"
     index_params: Optional[Dict[str, Any]] = None
@@ -71,7 +71,7 @@ class CollectionInfo(BaseModel):
     """
 
     name: str
-    dimension: int = 1536
+    dimension: int = 1024
     metric_type: str = "Cosine"
     index_type: str = "HNSW"
     vector_count: int = 0

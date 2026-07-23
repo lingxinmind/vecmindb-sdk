@@ -24,7 +24,7 @@ class TestModels(unittest.TestCase):
     def test_create_collection_request_defaults(self):
         req = CreateCollectionRequest(name="test")
         self.assertEqual(req.name, "test")
-        self.assertEqual(req.dimension, 1536)
+        self.assertEqual(req.dimension, 1024)
         self.assertEqual(req.metric_type, "Cosine")
         self.assertEqual(req.index_type, "HNSW")
         self.assertIsNone(req.index_params)
