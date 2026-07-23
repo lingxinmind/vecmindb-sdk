@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vecmindb"
-version = "1.0.1"
+version = "1.0.2"
 description = "Python SDK for VecminDB - High-performance vector database HTTP client"
 authors = [{email = "contact@lingxinmind.com", name = "VecminDB Team"}]
 license = {text = "MIT OR Apache-2.0"}
