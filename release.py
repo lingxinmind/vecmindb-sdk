@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-VecminDB SDK Release Manager (Cross-platform Python version)
-Aligns all SDK configurations (Python, TypeScript, Rust) to a unified version.
+VecminDB SDK Release Manager (Source of Truth Version)
+Aligns all SDK configurations (Python, TypeScript) to a unified version.
 """
 
 import os
@@ -11,6 +11,7 @@ import shutil
 import argparse
 import subprocess
 
+# Paths relative to the sdk/ directory (Source of Truth)
 FILES_TO_BUMP = {
     "python/pyproject.toml": [
         (r'(^version\s*=\s*")(\d+\.\d+\.\d+)(")', r'\g<1>{}\g<3>')
@@ -21,13 +22,20 @@ FILES_TO_BUMP = {
     "typescript/package.json": [
         (r'("version"\s*:\s*")(\d+\.\d+\.\d+)(")', r'\g<1>{}\g<3>')
     ],
-    "rust/Cargo.toml": [
-        (r'(^version\s*=\s*")(\d+\.\d+\.\d+)(")', r'\g<1>{}\g<3>')
+    "../Cargo.toml": [
+        (r'(^name\s*=\s*"vecmindb"\s*\nversion\s*=\s*")(\d+\.\d+\.\d+)(")', r'\g<1>{}\g<3>')
+    ],
+    "../docker-compose.yml": [
+        (r'(APP_VERSION:\s*")(\d+\.\d+\.\d+)(")', r'\g<1>{}\g<3>')
+    ],
+    "../docker-compose.production.yml": [
+        (r'(vecmindb:)(\d+\.\d+\.\d+)', r'\g<1>{}')
     ]
 }
 
 def update_version(filename, version):
     if not os.path.exists(filename):
+        print(f"  ⚠️ File not found: {filename}")
         return False
     
     with open(filename, "r", encoding="utf-8") as f:
@@ -39,11 +47,11 @@ def update_version(filename, version):
 
     with open(filename, "w", encoding="utf-8", newline="\n") as f:
         f.write(new_content)
-    print(f"  ✓ Updated {filename}")
+    print(f"  Updated: {filename}")
     return True
 
 def purge_caches():
-    print("\n🧹 Purging build and package caches...")
+    print("\nPurging build and package caches...")
     # Python Caches
     if os.path.exists("python"):
         for path in ["python/build", "python/dist"]:
@@ -56,11 +64,7 @@ def purge_caches():
     # TypeScript Caches
     if os.path.exists("typescript/dist"):
         shutil.rmtree("typescript/dist")
-        
-    # Rust Caches
-    if os.path.exists("rust/target"):
-        shutil.rmtree("rust/target")
-    print("  ✓ Caches cleared.")
+    print("  Completed: Caches cleared.")
 
 def main():
     parser = argparse.ArgumentParser(description="VecminDB SDK Release Manager")
@@ -70,11 +74,11 @@ def main():
 
     version = args.version
     if not re.match(r'^\d+\.\d+\.\d+$', version):
-        print(f"❌ Error: Invalid version format '{version}'. Must be x.y.z")
+        print(f"Error: Invalid version format '{version}'. Must be x.y.z")
         sys.exit(1)
 
     print("==========================================================")
-    print(f"🚀 Aligning VecminDB SDKs to version: {version}")
+    print(f"Aligning VecminDB SDKs to version: {version}")
     print("==========================================================")
 
     if args.dry_run:
@@ -89,21 +93,18 @@ def main():
     purge_caches()
 
     # Compiling builds where possible
-    print("\n🏗️ Compiling packages...")
+    print("\nCompiling packages...")
     if os.path.exists("python/pyproject.toml"):
         print("  Compiling Python SDK...")
-        subprocess.run([sys.executable, "-m", "build"], cwd="python", shell=True)
+        try:
+            subprocess.run([sys.executable, "-m", "build"], cwd="python", shell=True, check=True)
+        except Exception as e:
+            print(f"  Warning: Python compilation skipped/failed: {e}")
 
     print("\n==========================================================")
-    print(f"✨ Release alignment completed successfully for version: {version}")
+    print(f"Release alignment completed successfully for version: {version}")
     print("==========================================================")
-    print("📦 Instructions to publish:")
-    print("\n  1. Publish Python SDK to PyPI:")
-    print("     cd python && python -m twine upload dist/*")
-    print("\n  2. Publish TypeScript SDK to NPM:")
-    print("     cd typescript && npm publish")
-    print("\n  3. Publish Rust SDK to crates.io:")
-    print("     cd rust && cargo publish")
+    print("Git Hook will automatically propagate these changes to vecmindb-sdk upon commit.")
     print("==========================================================")
 
 if __name__ == "__main__":

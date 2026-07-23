@@ -1,5 +1,5 @@
 #!/bin/bash
-# Production-Grade Automated Release Script for VecminDB SDKs
+# Production-Grade Automated Release Script for VecminDB SDKs (Source of Truth)
 # Ensures multi-language SDK versions align and clean builds are produced.
 set -e
 
@@ -7,7 +7,7 @@ set -e
 if [ -z "$1" ]; then
     echo "❌ Error: Please specify the version to release."
     echo "Usage:   ./release.sh <version>"
-    echo "Example: ./release.sh 1.0.0"
+    echo "Example: ./release.sh 1.0.1"
     exit 1
 fi
 
@@ -26,11 +26,9 @@ echo "📝 Step 1: Aligning version strings to $VERSION..."
 if [ -d "python" ]; then
     echo "  - Updating Python configuration..."
     if [ -f "python/pyproject.toml" ]; then
-        # Handle setuptools pyproject version field
         sed -i "s/^version\s*=\s*\".*\"/version = \"$VERSION\"/" python/pyproject.toml
     fi
     if [ -f "python/vecmindb/__init__.py" ]; then
-        # Handle Python internal module version
         sed -i "s/^__version__\s*=\s*\".*\"/__version__ = \"$VERSION\"/" python/vecmindb/__init__.py
     fi
 fi
@@ -39,19 +37,22 @@ fi
 if [ -d "typescript" ]; then
     echo "  - Updating TypeScript package configuration..."
     if [ -f "typescript/package.json" ]; then
-        # Handle Node.js package.json version field
         sed -i "s/\"version\":\s*\".*\"/\"version\": \"$VERSION\"/" typescript/package.json
     fi
 fi
 
-# Rust Version Bump
-if [ -d "rust" ]; then
-    echo "  - Updating Rust crate configuration..."
-    if [ -f "rust/Cargo.toml" ]; then
-        # Handle Cargo.toml version field
-        sed -i "s/^version\s*=\s*\".*\"/version = \"$VERSION\"/" rust/Cargo.toml
-    fi
+# Server Configurations Version Bump
+echo "  - Updating Server configurations..."
+if [ -f "../Cargo.toml" ]; then
+    sed -i '/name = "vecmindb"/{n;s/version = ".*"/version = "'"$VERSION"'"/}' ../Cargo.toml
 fi
+if [ -f "../docker-compose.yml" ]; then
+    sed -i "s/APP_VERSION:\s*\".*\"/APP_VERSION: \"$VERSION\"/" ../docker-compose.yml
+fi
+if [ -f "../docker-compose.production.yml" ]; then
+    sed -i "s/vecmindb:[0-9.]*/vecmindb:$VERSION/g" ../docker-compose.production.yml
+fi
+
 
 # --------------------------------------------------------
 # 2. Purge Build Caches
@@ -66,10 +67,6 @@ if [ -d "typescript" ]; then
     rm -rf typescript/dist/
 fi
 
-if [ -d "rust" ]; then
-    rm -rf rust/target/
-fi
-
 # --------------------------------------------------------
 # 3. Compile Python SDK (Wheel & Tarball)
 # --------------------------------------------------------
@@ -80,42 +77,8 @@ if [ -d "python" ]; then
     cd ..
 fi
 
-# --------------------------------------------------------
-# 4. Compile TypeScript SDK (NPM Distribution)
-# --------------------------------------------------------
-if [ -d "typescript" ]; then
-    echo "🏗️ Step 4: Compiling TypeScript SDK..."
-    cd typescript
-    if [ -f "package.json" ]; then
-        # Ensure dependencies are installed and trigger the compiler
-        npm install
-        npm run build
-    fi
-    cd ..
-fi
-
-# --------------------------------------------------------
-# 5. Verify Rust SDK Stub
-# --------------------------------------------------------
-if [ -d "rust" ]; then
-    echo "🏗️ Step 5: Verifying Rust SDK (Cargo package check)..."
-    cd rust
-    cargo check
-    cargo package --allow-dirty
-    cd ..
-fi
-
 echo "=========================================================="
-echo "✨ Release compilation completed successfully for version: $VERSION"
+echo "✨ Release alignment completed successfully for version: $VERSION"
 echo "=========================================================="
-echo "📦 Final steps to publish your packages:"
-echo ""
-echo "  1. Publish Python SDK to PyPI:"
-echo "     cd python && python3 -m twine upload dist/*"
-echo ""
-echo "  2. Publish TypeScript SDK to NPM:"
-echo "     cd typescript && npm publish"
-echo ""
-echo "  3. Publish Rust SDK to crates.io:"
-echo "     cd rust && cargo publish"
+echo "📦 Git Hook will automatically propagate these changes to vecmindb-sdk upon commit."
 echo "=========================================================="
