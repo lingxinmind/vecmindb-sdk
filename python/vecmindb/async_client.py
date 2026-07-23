@@ -1101,8 +1101,15 @@ class AsyncVecminClient:
             ``True`` if the collection exists or was created.
         """
         try:
-            await self.get_collection(name)
+            info = await self.get_collection(name)
+            if info.dimension != dimension:
+                raise VecminError(
+                    f"Dimensional mismatch for collection '{name}': "
+                    f"requested {dimension}, but existing collection has {info.dimension}."
+                )
             return True
+        except VecminError:
+            raise
         except Exception:
             pass
         try:
