@@ -57,13 +57,6 @@ from .retry import RetryConfig, retry_async
 logger = logging.getLogger("vecmindb.async_client")
 
 
-def _model_to_dict(model: Any, **kwargs: Any) -> Dict[str, Any]:
-    if hasattr(model, "model_dump"):
-        return model.model_dump(**kwargs)
-    return model.dict(**kwargs)
-
-
-
 class AsyncVecminClient:
     """Asynchronous client for the VecminDB REST API.
 
@@ -278,7 +271,7 @@ class AsyncVecminClient:
         payload = ClusterLoginRequest(password=password)
         resp = await self._client.post(
             f"{self._api_url}/cluster/login",
-            json=_model_to_dict(payload),
+            json=payload.model_dump(),
             headers={"Content-Type": "application/json"},
         )
         if resp.status_code != 200:
@@ -380,7 +373,7 @@ class AsyncVecminClient:
             index_params=index_params,
             domain=domain,
         )
-        body = _model_to_dict(payload, exclude_none=True)
+        body = payload.model_dump(exclude_none=True)
         resolved_token = sovereignty_token or self.sovereignty_token
         if resolved_token:
             body["sovereignty_token"] = resolved_token
@@ -485,7 +478,7 @@ class AsyncVecminClient:
         payload = InsertRequest(id=id, values=vector, metadata=metadata)
         data = await self._api_post(
             f"/collections/{collection}/vectors",
-            _model_to_dict(payload, exclude_none=True),
+            payload.model_dump(exclude_none=True),
             **kw,
         )
         result = data.get("data", data)
@@ -513,7 +506,7 @@ class AsyncVecminClient:
         payload = BatchInsertRequest(vectors=items)
         data = await self._api_post(
             f"/collections/{collection}/batch",
-            _model_to_dict(payload, exclude_none=True),
+            payload.model_dump(exclude_none=True),
             **kw,
         )
         result = data.get("data", data)
@@ -548,7 +541,7 @@ class AsyncVecminClient:
         payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
         data = await self._api_post(
             f"/collections/{collection}/search",
-            _model_to_dict(payload, exclude_none=True),
+            payload.model_dump(exclude_none=True),
             **kw,
         )
         raw = data.get("data", data)
@@ -613,7 +606,7 @@ class AsyncVecminClient:
             Vector identifier.
         """
         payload = CreateVectorRequest(id=id, values=values, metadata=metadata, collection=collection)
-        data = await self._api_post("/vectors", _model_to_dict(payload, exclude_none=True), **kw)
+        data = await self._api_post("/vectors", payload.model_dump(exclude_none=True), **kw)
         result = data.get("data", data)
         if isinstance(result, dict):
             return result.get("id", str(result))
@@ -635,7 +628,7 @@ class AsyncVecminClient:
         """
         items = [CreateVectorRequest(**v) for v in vectors]
         payload = BatchCreateVectorsRequest(vectors=items)
-        data = await self._api_post("/vectors/batch", _model_to_dict(payload, exclude_none=True), **kw)
+        data = await self._api_post("/vectors/batch", payload.model_dump(exclude_none=True), **kw)
         result = data.get("data", data)
         if isinstance(result, list):
             return [r.get("id", str(r)) if isinstance(r, dict) else str(r) for r in result]
@@ -675,7 +668,7 @@ class AsyncVecminClient:
             Deletion confirmation.
         """
         payload = BatchDeleteVectorsRequest(ids=ids)
-        data = await self._api_post("/vectors/batch/delete", _model_to_dict(payload), **kw)
+        data = await self._api_post("/vectors/batch/delete", payload.model_dump(), **kw)
         return VecminResponse(**data) if isinstance(data, dict) else VecminResponse(data=data)
 
     async def search_vectors(
@@ -701,7 +694,7 @@ class AsyncVecminClient:
             Search results.
         """
         payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
-        data = await self._api_post("/vectors/search", _model_to_dict(payload, exclude_none=True), **kw)
+        data = await self._api_post("/vectors/search", payload.model_dump(exclude_none=True), **kw)
         raw = data.get("data", data)
         if isinstance(raw, list):
             return SearchResponse(results=[SearchHit(**h) for h in raw if isinstance(h, dict)])
@@ -858,7 +851,7 @@ class AsyncVecminClient:
             Login response containing the JWT token.
         """
         payload = ClusterLoginRequest(password=password)
-        data = await self._api_post("/cluster/login", _model_to_dict(payload), **kw)
+        data = await self._api_post("/cluster/login", payload.model_dump(), **kw)
         result = data.get("data", data)
         login_resp = ClusterLoginResponse(**result)
         self._auth.update_jwt(login_resp.token, login_resp.expires_in)
@@ -875,7 +868,7 @@ class AsyncVecminClient:
             Join acknowledgement.
         """
         payload = ClusterJoinRequest(node_id=node_id, addr=addr)
-        data = await self._api_post("/cluster/join", _model_to_dict(payload), **kw)
+        data = await self._api_post("/cluster/join", payload.model_dump(), **kw)
         return VecminResponse(**data) if isinstance(data, dict) else VecminResponse(data=data)
 
     async def cluster_promote(self, node_id: str, **kw) -> VecminResponse:
@@ -888,7 +881,7 @@ class AsyncVecminClient:
             Promotion acknowledgement.
         """
         payload = ClusterPromoteRequest(node_id=node_id)
-        data = await self._api_post("/cluster/promote", _model_to_dict(payload), **kw)
+        data = await self._api_post("/cluster/promote", payload.model_dump(), **kw)
         return VecminResponse(**data) if isinstance(data, dict) else VecminResponse(data=data)
 
     async def list_nodes(self, **kw) -> List[ClusterNodeInfo]:
@@ -1110,7 +1103,7 @@ class AsyncVecminClient:
             index_type: Index algorithm.
             index_params: Algorithm parameters.
             domain: Cognitive factuality domain.
-            sovereignty_token: Sovereign domain access token.
+            sovereignty_token: Sovereign domain access token forwarded to create_collection.
 
         Returns:
             ``True`` if the collection exists or was created.

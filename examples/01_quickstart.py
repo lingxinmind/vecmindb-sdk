@@ -37,19 +37,19 @@ def main():
         #   - "insurance"     : Insurance Policy & Claims Processing
         #   - "education"     : Education & Academic Records
         
-        # 3. Mount Cognitive Memory Space for an Agent
-        # Agent binds its sovereign partition directly to a target collection!
-        agent_id = "demo_agent_01"
-        sovereignty_token = "system"
-
         # Option A: Zero-Param Creation (Defaults to "general" domain, 1024-dim BGE-M3, Cosine, HNSW)
         client.create_collection("my_documents")
 
         # Option B: Domain-Anchored Creation (Specify collection name & domain!)
         # Align with mount_memory's default dimension of 1024
-        client.create_collection("financial_reports", domain="finance", dimension=1024, sovereignty_token=sovereignty_token)
+        client.create_collection("financial_reports", domain="finance", dimension=1024)
         print("✓ Collections created successfully with domain factuality anchoring!")
 
+        # 3. Mount Cognitive Memory Space for an Agent
+        # Agent binds its sovereign partition directly to a target collection!
+        agent_id = "demo_agent_01"
+        sovereignty_token = "demo_sovereign_secret_99"
+        
         print(f"\nMounting memory space for agent '{agent_id}' to collection 'financial_reports'...")
         manager = AgentMemoryManager(
             client=client,
