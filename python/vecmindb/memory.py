@@ -46,6 +46,7 @@ class AgentMemoryManager:
             metric_type=kwargs.get("metric_type", "Cosine"),
             index_type=kwargs.get("index_type", "HNSW"),
             domain=domain or "general",
+            sovereignty_token=self.sovereignty_token,
         )
         return VecminMemorySpace(
             client=self.client,
@@ -86,6 +87,7 @@ class AsyncAgentMemoryManager:
             metric_type=kwargs.get("metric_type", "Cosine"),
             index_type=kwargs.get("index_type", "HNSW"),
             domain=domain or "general",
+            sovereignty_token=self.sovereignty_token,
         )
         return AsyncVecminMemorySpace(
             client=self.client,

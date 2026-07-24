@@ -57,6 +57,13 @@ from .retry import RetryConfig, retry_sync
 logger = logging.getLogger("vecmindb.client")
 
 
+def _model_to_dict(model: Any, **kwargs: Any) -> Dict[str, Any]:
+    if hasattr(model, "model_dump"):
+        return model.model_dump(**kwargs)
+    return model.dict(**kwargs)
+
+
+
 class VecminClient:
     """Synchronous client for the VecminDB REST API.
 
@@ -220,7 +227,7 @@ class VecminClient:
         payload = ClusterLoginRequest(password=password)
         resp = self._client.post(
             f"{self._api_url}/cluster/login",
-            json=payload.model_dump(),
+            json=_model_to_dict(payload),
             headers={"Content-Type": "application/json"},
         )
         if resp.status_code != 200:
@@ -277,6 +284,7 @@ class VecminClient:
         index_type: str = "HNSW",
         index_params: Optional[Dict[str, Any]] = None,
         domain: Optional[str] = "general",
+        sovereignty_token: Optional[str] = None,
         **kw,
     ) -> CollectionInfo:
         """Create a new collection (``POST /api/v1/collections``)."""
@@ -285,7 +293,11 @@ class VecminClient:
             index_type=index_type, index_params=index_params,
             domain=domain,
         )
-        data = self._api_post("/collections", payload.model_dump(exclude_none=True), **kw)
+        body = _model_to_dict(payload, exclude_none=True)
+        resolved_token = sovereignty_token or self.sovereignty_token
+        if resolved_token:
+            body["sovereignty_token"] = resolved_token
+        data = self._api_post("/collections", body, **kw)
         res_data = data.get("data") if isinstance(data, dict) else None
         if not isinstance(res_data, dict):
             return CollectionInfo(name=name, dimension=dimension, metric_type=metric_type, index_type=index_type, domain=domain)
@@ -354,7 +366,7 @@ class VecminClient:
         payload = InsertRequest(id=id, values=vector, metadata=metadata)
         data = self._api_post(
             f"/collections/{collection}/vectors",
-            payload.model_dump(exclude_none=True),
+            _model_to_dict(payload, exclude_none=True),
             **kw,
         )
         result = data.get("data", data)
@@ -374,7 +386,7 @@ class VecminClient:
         payload = BatchInsertRequest(vectors=items)
         data = self._api_post(
             f"/collections/{collection}/batch",
-            payload.model_dump(exclude_none=True),
+            _model_to_dict(payload, exclude_none=True),
             **kw,
         )
         result = data.get("data", data)
@@ -397,7 +409,7 @@ class VecminClient:
         payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
         data = self._api_post(
             f"/collections/{collection}/search",
-            payload.model_dump(exclude_none=True),
+            _model_to_dict(payload, exclude_none=True),
             **kw,
         )
         raw = data.get("data", data)
@@ -433,7 +445,7 @@ class VecminClient:
     ) -> str:
         """Create a vector in the global namespace (``POST /api/v1/vectors``)."""
         payload = CreateVectorRequest(id=id, values=values, metadata=metadata, collection=collection)
-        data = self._api_post("/vectors", payload.model_dump(exclude_none=True), **kw)
+        data = self._api_post("/vectors", _model_to_dict(payload, exclude_none=True), **kw)
         result = data.get("data", data)
         if isinstance(result, dict):
             return result.get("id", str(result))
@@ -448,7 +460,7 @@ class VecminClient:
         """Batch create vectors (``POST /api/v1/vectors/batch``)."""
         items = [CreateVectorRequest(**v) for v in vectors]
         payload = BatchCreateVectorsRequest(vectors=items)
-        data = self._api_post("/vectors/batch", payload.model_dump(exclude_none=True), **kw)
+        data = self._api_post("/vectors/batch", _model_to_dict(payload, exclude_none=True), **kw)
         result = data.get("data", data)
         if isinstance(result, list):
             return [r.get("id", str(r)) if isinstance(r, dict) else str(r) for r in result]
@@ -467,7 +479,7 @@ class VecminClient:
     def batch_delete_vectors(self, *, ids: List[str], **kw) -> VecminResponse:
         """Batch delete vectors (``POST /api/v1/vectors/batch/delete``)."""
         payload = BatchDeleteVectorsRequest(ids=ids)
-        data = self._api_post("/vectors/batch/delete", payload.model_dump(), **kw)
+        data = self._api_post("/vectors/batch/delete", _model_to_dict(payload), **kw)
         return VecminResponse(**data) if isinstance(data, dict) else VecminResponse(data=data)
 
     def search_vectors(
@@ -482,7 +494,7 @@ class VecminClient:
     ) -> SearchResponse:
         """Global vector search (``POST /api/v1/vectors/search``)."""
         payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
-        data = self._api_post("/vectors/search", payload.model_dump(exclude_none=True), **kw)
+        data = self._api_post("/vectors/search", _model_to_dict(payload, exclude_none=True), **kw)
         raw = data.get("data", data)
         if isinstance(raw, list):
             return SearchResponse(results=[SearchHit(**h) for h in raw if isinstance(h, dict)])
@@ -570,7 +582,7 @@ class VecminClient:
     def cluster_login(self, password: str, **kw) -> ClusterLoginResponse:
         """Authenticate and obtain a JWT (``POST /api/v1/cluster/login``)."""
         payload = ClusterLoginRequest(password=password)
-        data = self._api_post("/cluster/login", payload.model_dump(), **kw)
+        data = self._api_post("/cluster/login", _model_to_dict(payload), **kw)
         result = data.get("data", data)
         login_resp = ClusterLoginResponse(**result)
         self._auth.update_jwt(login_resp.token, login_resp.expires_in)
@@ -579,13 +591,13 @@ class VecminClient:
     def cluster_join(self, node_id: str, addr: str, **kw) -> VecminResponse:
         """Join a cluster (``POST /api/v1/cluster/join``)."""
         payload = ClusterJoinRequest(node_id=node_id, addr=addr)
-        data = self._api_post("/cluster/join", payload.model_dump(), **kw)
+        data = self._api_post("/cluster/join", _model_to_dict(payload), **kw)
         return VecminResponse(**data) if isinstance(data, dict) else VecminResponse(data=data)
 
     def cluster_promote(self, node_id: str, **kw) -> VecminResponse:
         """Promote a node (``POST /api/v1/cluster/promote``)."""
         payload = ClusterPromoteRequest(node_id=node_id)
-        data = self._api_post("/cluster/promote", payload.model_dump(), **kw)
+        data = self._api_post("/cluster/promote", _model_to_dict(payload), **kw)
         return VecminResponse(**data) if isinstance(data, dict) else VecminResponse(data=data)
 
     def list_nodes(self, **kw) -> List[ClusterNodeInfo]:
@@ -762,6 +774,7 @@ class VecminClient:
         index_type: str = "HNSW",
         index_params: Optional[Dict[str, Any]] = None,
         domain: Optional[str] = "general",
+        sovereignty_token: Optional[str] = None,
     ) -> bool:
         """Ensure a collection exists, creating it if necessary.
 
@@ -792,7 +805,7 @@ class VecminClient:
             self.create_collection(
                 name, dimension=dimension, metric_type=metric_type,
                 index_type=index_type, index_params=index_params,
-                domain=domain,
+                domain=domain, sovereignty_token=sovereignty_token,
             )
             return True
         except Exception:
