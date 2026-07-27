@@ -52,7 +52,7 @@ Ideal for high-performance, air-gapped on-premise or private cloud servers. Down
 
 ## SDK Quickstart
 
-First, install the target client SDK:
+### Python SDK
 
 ```bash
 # Install core client
@@ -63,6 +63,22 @@ pip install vecmindb[langchain]
 
 # Install with CrewAI integration
 pip install vecmindb[crewai]
+```
+
+### Java SDK (Maven)
+
+```xml
+<dependency>
+    <groupId>com.vecmindb</groupId>
+    <artifactId>vecmindb-java-sdk</artifactId>
+    <version>1.0.2</version>
+</dependency>
+```
+
+### TypeScript SDK (npm)
+
+```bash
+npm install vecmindb
 ```
 
 ### Using with LangChain
