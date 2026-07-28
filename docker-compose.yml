@@ -1,0 +1,47 @@
+# VecminDB Single-Node Production Deployment Manifest
+# Usage:
+#   curl -sSL https://raw.githubusercontent.com/lingxinmind/vecmindb-sdk/main/docker-compose.yml -o docker-compose.yml
+#   docker compose up -d
+#
+# Daily Upgrade:
+#   docker compose pull && docker compose up -d
+
+services:
+  vecmindb:
+    container_name: vecmindb
+    image: ghcr.io/lingxinmind/vecmindb:latest
+    # Domestic users in mainland China (Alibaba Cloud ACR Mirror):
+    # image: crpi-ngtfnt7d3tsnwk7l.cn-shanghai.personal.cr.aliyuncs.com/vecmindb/vecmindb:latest
+    ports:
+      - "5520:5520" # HTTP API
+      - "5521:5521" # Raft / gRPC
+    volumes:
+      - vecmindb_data:/home/vecminDB/data
+      - vecmindb_logs:/home/vecminDB/logs
+    environment:
+      - LOG_FORMAT=json
+      - LOG_LEVEL=info
+      - RUST_BACKTRACE=1
+      - VECMIN_HOST=0.0.0.0
+      - VECMIN_PORT=5520
+      - VECMIN_RAFT_PORT=5521
+      - VECMIN_ADMIN_KEY=${VECMIN_ADMIN_KEY:-}
+    deploy:
+      resources:
+        limits:
+          cpus: '${VECMIN_CPU_LIMIT:-4.0}'
+          memory: ${VECMIN_MEM_LIMIT:-8G}
+        reservations:
+          cpus: '${VECMIN_CPU_RESERVATION:-2.0}'
+          memory: ${VECMIN_MEM_RESERVATION:-4G}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5520/healthz/ready"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  vecmindb_data:
+  vecmindb_logs:

@@ -1,0 +1,73 @@
+# Production-grade Zero-Downtime Hot Reload Deployment Manifest
+# Architecture: Dual-Container Active-Passive Rolling Upgrade + Nginx Reverse Proxy
+# Usage:
+#   curl -sSL https://raw.githubusercontent.com/lingxinmind/vecmindb-sdk/main/docker-compose.zero-downtime.yml -o docker-compose.zero-downtime.yml
+#   docker compose -f docker-compose.zero-downtime.yml up -d
+
+version: '3.8'
+
+services:
+  # Upstream Nginx Reverse Proxy for Zero-Downtime Traffic Switching
+  gateway:
+    image: docker.io/library/nginx:alpine
+    container_name: vecmindb_gateway
+    ports:
+      - "5520:5520"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      vecmindb-node1:
+        condition: service_healthy
+    restart: always
+
+  # Primary VecminDB Node (Active)
+  vecmindb-node1:
+    container_name: vecmindb_node1
+    image: ghcr.io/lingxinmind/vecmindb:latest
+    environment:
+      - LOG_FORMAT=json
+      - LOG_LEVEL=info
+      - RUST_BACKTRACE=1
+      - VECMIN_HOST=0.0.0.0
+      - VECMIN_PORT=5520
+      - VECMIN_RAFT_PORT=5521
+    volumes:
+      - vecmindb_shared_data:/home/vecminDB/data
+      - vecmindb_logs:/home/vecminDB/logs
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5520/healthz/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # Secondary VecminDB Node (Standby / Hot Update Candidate)
+  vecmindb-node2:
+    container_name: vecmindb_node2
+    image: ghcr.io/lingxinmind/vecmindb:latest
+    environment:
+      - LOG_FORMAT=json
+      - LOG_LEVEL=info
+      - RUST_BACKTRACE=1
+      - VECMIN_HOST=0.0.0.0
+      - VECMIN_PORT=5520
+      - VECMIN_RAFT_PORT=5521
+    volumes:
+      - vecmindb_shared_data:/home/vecminDB/data
+      - vecmindb_logs:/home/vecminDB/logs
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5520/healthz/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+    profiles:
+      - standby
+    restart: unless-stopped
+
+volumes:
+  vecmindb_shared_data:
+  vecmindb_logs:
