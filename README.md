@@ -13,14 +13,27 @@ The official SDK for [VecminDB](https://lingxinmind.com) — The Sovereign Memor
 VecminDB can be run via Docker or as optimized, standalone pre-compiled native binary packages. No local compilers, dependencies, or Python runtimes are needed.
 
 ### Method A: Docker Deployment (All Platforms - Windows, macOS, Linux)
-The fastest way to spin up VecminDB with automatic in-database bilingual embedding support.
+The fastest way to spin up VecminDB with automatic in-database bilingual embedding support and zero-downtime rolling update capabilities.
 
+#### Option 1: One-Line Docker Compose (Recommended for Production & Hot Updates)
+```bash
+# 1. Download production docker-compose.yml in one command
+curl -sSL https://raw.githubusercontent.com/lingxinmind/vecmindb-sdk/main/docker-compose.yml -o docker-compose.yml
+
+# 2. Spin up production container
+docker compose up -d
+
+# 3. Daily Online Hot Upgrade:
+# docker compose pull && docker compose up -d
+```
+
+#### Option 2: Standalone Docker Run
 ```bash
 # For Global / Overseas users:
-docker run -d --name vecmindb-trial -p 5520:5520 ghcr.io/lingxinmind/vecmindb:latest
+docker run -d --name vecmindb-trial -p 5520:5520 -v vecmindb_data:/home/vecminDB/data ghcr.io/lingxinmind/vecmindb:latest
 
 # For Domestic users (China Aliyun Mirror):
-# docker run -d --name vecmindb-trial -p 5520:5520 crpi-ngtfnt7d3tsnwk7l.cn-shanghai.personal.cr.aliyuncs.com/vecmindb/vecmindb:latest
+# docker run -d --name vecmindb-trial -p 5520:5520 -v vecmindb_data:/home/vecminDB/data crpi-ngtfnt7d3tsnwk7l.cn-shanghai.personal.cr.aliyuncs.com/vecmindb/vecmindb:latest
 ```
 
 ---
