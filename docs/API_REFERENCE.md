@@ -131,8 +131,8 @@ POST /api/v1/collections
 | Field | Type | Required | Description |
 |:------|:-----|:---------|:------------|
 | `name` | string | Yes | Unique collection name |
-| `dimension` | integer | Yes | Vector dimension (1--10000) |
-| `index_type` | string | No | `Flat`, `HNSW`, `IVF`, `PQ`, `LSH`, `VPTree` (default: `Flat`) |
+| `dimension` | integer | No | Vector dimension (1--10000, default: `1024` matching built-in BGE-M3 model) |
+| `index_type` | string | No | `Flat`, `HNSW`, `IVF`, `PQ`, `LSH`, `VPTree` (default: `HNSW`) |
 | `metadata_schema` | object | No | Optional attribute schema for filtering |
 
 **Response (201 Created):**
