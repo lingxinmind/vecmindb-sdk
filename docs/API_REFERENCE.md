@@ -26,6 +26,7 @@ Complete reference for the VecminDB HTTP API. All endpoints use JSON for request
 |:-----|:------|
 | **Base URL** | `http://localhost:5520` |
 | **API Version** | `v1` |
+| **Server Version** | `v1.0.4` (Latest Production Release) |
 | **Content-Type** | `application/json` |
 | **Default HTTP Port** | `5520` |
 | **Default Raft/gRPC Port** | `5521` |
