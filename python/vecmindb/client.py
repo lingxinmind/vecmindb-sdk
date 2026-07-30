@@ -626,7 +626,7 @@ class VecminClient:
         """Helper to parse raw MCP response and extract plain text or JSON string."""
         if not isinstance(data, dict):
             return str(data)
-        
+
         # 1. Strip top-level "data" wrapper if present
         wrapped = data.get("data")
         if isinstance(wrapped, dict):
