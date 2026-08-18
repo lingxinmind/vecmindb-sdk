@@ -1,8 +1,8 @@
 # VecminDB SDK
 
-The official SDK for [VecminDB](https://lingxinmind.com) — The Sovereign Memory OS for AI Agents.
+The official Rust SDK for [VecminDB](https://lingxinmind.com) — the self-hosted memory layer for your AI coding agents.
 
-> Stop letting your AI Agents hallucinate from memory rot. VecminDB naturally decays outdated memories, distills knowledge via PCA, and provides 100% Air-Gapped cryptographic data sovereignty.
+`cargo add vecmindb` · Docker one-liner
 
 ⚠️ **License Note**: VecminDB is a commercial Cognitive Vector Database. The Free Tier supports up to 5 agents and 100K vectors/agent forever. For enterprise scale-out or clusters, please visit our official website to register and obtain a license key: [https://lingxinmind.com](https://lingxinmind.com).
 
@@ -102,7 +102,7 @@ agent = Agent(
 Unlike generic vector databases that act as static drives, VecminDB acts as a cognitive memory operating system with native lifecycle management and cryptographic isolation:
 
 *   **Biological Forgetting (LTSM)**: Episodic memories decay dynamically following $W(t) = \exp(-\lambda \times \Delta t)$ with automatic 90-day semantic pruning (`let semantic_prune_threshold_secs = 90 * 86400;` on disk). Frequently accessed memories persist; transient noise is permanently retired.
-*   **Welford & PCA Memory Distillation**: Fuses decaying memory clusters into stable Abstract Centroids using real-time Welford online variance and DP-Federated PCA. Storage converges and scales logarithmically, locking in long-term TCO budgets.
+*   **Welford & K-Means Centroid Distillation**: Fuses decaying memory clusters into stable Abstract Centroids using real-time Welford online variance and K-Means clustering. Storage converges and scales logarithmically, locking in long-term TCO budgets.
 *   **3-Sigma Sentinel Guard**: Performs real-time anomaly detection and adversarial injection pruning. Evaluates cosine outlier distance with dynamic cutoffs: $\text{Threshold} = \max(\text{Mean}_s - 3 \times \text{Std}_s, 0.7)$.
 *   **Sovereign Federation**: Shares collective intelligence across multiple agent domains or VPCs without raw data leak. Fuses PCA Candidate Centroids with differential privacy and a 10% principal bias: $\vec{v}_{\text{centroid}} = \text{Mean}_{\text{global}} + P_0 \times 0.1$.
 *   **Raft Consensus & 1024-Bucket Anti-Entropy**: Combines strong consensus replication with self-healing topology. Employs monotonic lock validation (`pub fencing_token: u64`) and an adaptive sync cap: `(resolution * 2).min(1024)`.
