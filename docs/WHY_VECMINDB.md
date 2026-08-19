@@ -100,4 +100,4 @@ VECMIN_URL=http://localhost:5520 bash examples/demo_ltsm_lifecycle.sh
 ### 4. 实时联动见证
 *   终端输出 `Sovereignty isolation enforced... PASS`，验证 **跨租户强隔离（痛点 8）**。
 *   终端输出 `LTSM Centroid Query... PASS`，验证 **记忆自动蒸馏与降维（痛点 2）**。
-*   浏览器打开 **`http://localhost:5520/dashboard`**，**Avg Latency 稳定在 0.5ms 以内**，实时渲染流量波峰——验证**本地引擎级性能**。
+*   浏览器打开 **`http://localhost:5520/dashboard`**，实时渲染本地引擎的流量波峰——验证**本地引擎级性能**。
