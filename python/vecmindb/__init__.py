@@ -75,7 +75,7 @@ from .memory import (
 )
 from typing import Optional
 
-__version__ = "1.0.2"
+__version__ = "1.0.6"
 
 
 def connect(
