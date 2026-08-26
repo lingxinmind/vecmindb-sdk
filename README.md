@@ -96,6 +96,53 @@ pip install vecmindb[crewai]
 npm install vecmindb
 ```
 
+### Text in, Text out (server-side embedding)
+
+The server embeds raw text with the built-in BGE-M3 model — SDK users do
+not need to run an embedding model client-side.
+
+**Python**
+
+```python
+from vecmindb import VecminClient
+
+client = VecminClient(base_url="http://localhost:5520", api_key="YOUR_VECMIN_API_KEY")
+
+# Store a memory as raw text; the server embeds it and returns the vector ID
+memory_id = client.add_text(
+    "Customer requirement: data must stay on the intranet; prefer private deployment.",
+    metadata={"priority": "high", "topic": "deployment"},
+)
+
+# Search by raw text
+hits = client.search_text("default", text="data must stay on the intranet", top_k=5)
+for hit in hits:
+    print(hit.id, hit.score, hit.metadata)
+```
+
+`add_text` / `search_text` are also available on `AsyncVecminClient`.
+Advanced users can still pass raw vectors via `create_vector` / `search`.
+
+**TypeScript**
+
+```ts
+import { VecminClient } from "vecmindb";
+
+const client = new VecminClient({
+  baseUrl: "http://localhost:5520",
+  apiKey: "YOUR_VECMIN_API_KEY",
+});
+
+const memoryId = await client.insertText("default", {
+  text: "Customer requirement: data must stay on the intranet; prefer private deployment.",
+  metadata: { priority: "high" },
+});
+
+const hits = await client.searchText("default", {
+  text: "data must stay on the intranet",
+});
+```
+
 ### Using with LangChain
 
 ```python
