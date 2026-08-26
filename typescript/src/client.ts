@@ -13,7 +13,9 @@ import type {
   Collection,
   CollectionStats,
   InsertParams,
+  InsertTextParams,
   SearchParams,
+  SearchTextParams,
   SearchResult,
   Vector,
   IndexInfo,
@@ -267,6 +269,24 @@ export class VecminClient {
   }
 
   /**
+   * Store raw text into a collection; the server embeds it with the built-in
+   * BGE-M3 model — no client-side embedding required.
+   *
+   * @returns The vector ID (either the caller-supplied ID or a server-generated one).
+   *
+   * @example
+   * ```ts
+   * const id = await client.insertText("docs", {
+   *   text: "Customer requirement: data must stay on the intranet.",
+   *   metadata: { priority: "high" },
+   * });
+   * ```
+   */
+  async insertText(collection: string, params: InsertTextParams): Promise<string> {
+    return this.post<string>(`/collections/${encodeURIComponent(collection)}/insert`, params);
+  }
+
+  /**
    * Insert multiple vectors in a single request.
    *
    * @returns An array of vector IDs in the same order as the input.
@@ -300,6 +320,23 @@ export class VecminClient {
    */
   async search(collection: string, params: SearchParams): Promise<SearchResult[]> {
     return this.post<SearchResult[]>(`/collections/${encodeURIComponent(collection)}/search`, params);
+  }
+
+  /**
+   * Search a collection with raw text; the server embeds the query with the
+   * built-in BGE-M3 model — no client-side embedding required.
+   *
+   * @example
+   * ```ts
+   * const hits = await client.searchText("docs", { text: "data must stay on the intranet" });
+   * ```
+   */
+  async searchText(collection: string, params: SearchTextParams): Promise<SearchResult[]> {
+    return this.post<SearchResult[]>(`/collections/${encodeURIComponent(collection)}/search`, {
+      query_text: params.text,
+      top_k: params.k,
+      filter: params.filter,
+    });
   }
 
   /**

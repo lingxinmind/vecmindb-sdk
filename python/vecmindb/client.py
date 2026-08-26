@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from typing import Any, Dict, List, Optional
 
 import httpx
@@ -413,6 +414,32 @@ class VecminClient:
             return SearchResponse(results=[SearchHit(**h) for h in hits], total=raw.get("total", len(hits)))
         return SearchResponse()
 
+    def search_text(
+        self,
+        collection: str,
+        *,
+        text: str,
+        top_k: int = 10,
+        **kw,
+    ) -> SearchResponse:
+        """Search a collection with raw text (``POST /api/v1/collections/{name}/search``).
+
+        The server embeds the query with the built-in BGE-M3 model — no
+        client-side embedding required.
+        """
+        data = self._api_post(
+            f"/collections/{collection}/search",
+            {"query_text": text, "top_k": top_k},
+            **kw,
+        )
+        raw = data.get("data", data)
+        if isinstance(raw, list):
+            return SearchResponse(results=[SearchHit(**h) for h in raw if isinstance(h, dict)])
+        if isinstance(raw, dict):
+            hits = raw.get("results", raw.get("hits", []))
+            return SearchResponse(results=[SearchHit(**h) for h in hits], total=raw.get("total", len(hits)))
+        return SearchResponse()
+
     def get_vector(self, collection: str, id: str, **kw) -> Dict[str, Any]:
         """Retrieve a vector by ID (``GET /api/v1/collections/{name}/vectors/{id}``)."""
         data = self._api_get(f"/collections/{collection}/vectors/{id}", **kw)
@@ -439,6 +466,31 @@ class VecminClient:
         """Create a vector in the global namespace (``POST /api/v1/vectors``)."""
         payload = CreateVectorRequest(id=id, values=values, metadata=metadata, collection=collection)
         data = self._api_post("/vectors", payload.model_dump(exclude_none=True), **kw)
+        result = data.get("data", data)
+        if isinstance(result, dict):
+            return result.get("id", str(result))
+        return str(result)
+
+    def add_text(
+        self,
+        text: str,
+        *,
+        id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        collection: Optional[str] = None,
+        **kw,
+    ) -> str:
+        """Store raw text in the global namespace (``POST /api/v1/vectors`` with a 'text' payload).
+
+        The server embeds the text with the built-in BGE-M3 model — no
+        client-side embedding required.
+        """
+        payload: Dict[str, Any] = {"id": id or str(uuid.uuid4()), "text": text}
+        if metadata is not None:
+            payload["metadata"] = metadata
+        if collection is not None:
+            payload["collection"] = collection
+        data = self._api_post("/vectors", payload, **kw)
         result = data.get("data", data)
         if isinstance(result, dict):
             return result.get("id", str(result))

@@ -111,6 +111,26 @@ export interface InsertParams {
   metadata?: Record<string, unknown>;
 }
 
+/** Parameters for storing raw text (server-side embedding). */
+export interface InsertTextParams {
+  /** Unique identifier for the vector. If omitted the server generates one. */
+  id?: string;
+  /** Raw text; the server embeds it with the built-in BGE-M3 model. */
+  text: string;
+  /** Arbitrary key-value metadata attached to the vector. */
+  metadata?: Record<string, unknown>;
+}
+
+/** Parameters for searching with raw text (server-side embedding). */
+export interface SearchTextParams {
+  /** Raw query text; the server embeds it with the built-in BGE-M3 model. */
+  text: string;
+  /** Number of nearest neighbours to return. @default 10 */
+  k?: number;
+  /** Metadata filter expression (server-side). */
+  filter?: Record<string, unknown>;
+}
+
 /** Parameters for searching vectors. */
 export interface SearchParams {
   /** Query vector. */
