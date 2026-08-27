@@ -15,6 +15,10 @@ services:
     ports:
       - "5520:5520" # HTTP API
       - "5521:5521" # Raft / gRPC
+    # [DATA DURABILITY]: The server flushes all in-memory index shards to the
+    # volume on SIGTERM; the default 10s grace is too short for that flush to
+    # finish on large collections, and SIGKILL would truncate the checkpoint.
+    stop_grace_period: 120s
     volumes:
       - vecmindb_data:/home/vecminDB/data
       - vecmindb_logs:/home/vecminDB/logs
