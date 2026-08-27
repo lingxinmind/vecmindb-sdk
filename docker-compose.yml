@@ -6,6 +6,12 @@
 # Daily Upgrade:
 #   docker compose pull && docker compose up -d
 
+# [DATA DURABILITY]: Pin the compose project name. Without this, the project
+# name (and therefore the volume names) derive from the directory the user
+# runs compose in — running from a different directory silently attaches
+# fresh empty volumes and the data looks "lost".
+name: vecmindb
+
 services:
   vecmindb:
     container_name: vecmindb
