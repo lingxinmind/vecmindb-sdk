@@ -565,6 +565,108 @@ export class VecminClient {
     }
   }
 
+  /**
+   * Retrieve a single memory (full text + metadata) via the MCP `get_memory` tool.
+   *
+   * @example
+   * ```ts
+   * const memory = await client.mcpGetMemory("9c168038-b8b5-4055-9842-8088c237ee53");
+   * ```
+   */
+  async mcpGetMemory(memoryId: string): Promise<string> {
+    const controller = this.createController();
+    try {
+      return await fetchJson<string>(
+        `${this.mcpUrl}/messages`,
+        {
+          method: "POST",
+          headers: await this.buildHeaders(),
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Date.now(),
+            method: "tools/call",
+            params: {
+              name: "get_memory",
+              arguments: { id: memoryId },
+            },
+          }),
+          signal: controller.signal,
+        },
+        this.retryOptions,
+      );
+    } finally {
+      this.controllers.delete(controller);
+    }
+  }
+
+  /**
+   * Enumerate the caller's memories via the MCP `list_memories` tool.
+   *
+   * @example
+   * ```ts
+   * const inventory = await client.mcpListMemories(20);
+   * ```
+   */
+  async mcpListMemories(limit = 20): Promise<string> {
+    const controller = this.createController();
+    try {
+      return await fetchJson<string>(
+        `${this.mcpUrl}/messages`,
+        {
+          method: "POST",
+          headers: await this.buildHeaders(),
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Date.now(),
+            method: "tools/call",
+            params: {
+              name: "list_memories",
+              arguments: { limit },
+            },
+          }),
+          signal: controller.signal,
+        },
+        this.retryOptions,
+      );
+    } finally {
+      this.controllers.delete(controller);
+    }
+  }
+
+  /**
+   * Delete a memory by ID via the MCP `forget` tool.
+   *
+   * @example
+   * ```ts
+   * await client.mcpForget("9c168038-b8b5-4055-9842-8088c237ee53");
+   * ```
+   */
+  async mcpForget(memoryId: string): Promise<string> {
+    const controller = this.createController();
+    try {
+      return await fetchJson<string>(
+        `${this.mcpUrl}/messages`,
+        {
+          method: "POST",
+          headers: await this.buildHeaders(),
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: Date.now(),
+            method: "tools/call",
+            params: {
+              name: "forget",
+              arguments: { id: memoryId },
+            },
+          }),
+          signal: controller.signal,
+        },
+        this.retryOptions,
+      );
+    } finally {
+      this.controllers.delete(controller);
+    }
+  }
+
   // -----------------------------------------------------------------------
   // Lifecycle
   // -----------------------------------------------------------------------
