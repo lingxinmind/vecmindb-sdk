@@ -1096,6 +1096,69 @@ class AsyncVecminClient:
         data = await self._api_post("/mcp/message", payload, agent_id=effective_agent_id, model_id=effective_model_id, **kw)
         return self._parse_mcp_response(data)
 
+    async def mcp_get_memory(
+        self,
+        memory_id: str,
+        *,
+        agent_id: Optional[str] = None,
+        **kw,
+    ) -> str:
+        """Retrieve a single memory (full text + metadata) via the MCP ``get_memory`` tool."""
+        effective_agent_id = agent_id or self.agent_id
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+                "name": "get_memory",
+                "arguments": {"id": memory_id},
+            },
+            "id": 3,
+        }
+        data = await self._api_post("/mcp/message", payload, agent_id=effective_agent_id, **kw)
+        return self._parse_mcp_response(data)
+
+    async def mcp_list_memories(
+        self,
+        *,
+        limit: int = 20,
+        agent_id: Optional[str] = None,
+        **kw,
+    ) -> str:
+        """Enumerate the caller's memories via the MCP ``list_memories`` tool."""
+        effective_agent_id = agent_id or self.agent_id
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+                "name": "list_memories",
+                "arguments": {"limit": limit},
+            },
+            "id": 4,
+        }
+        data = await self._api_post("/mcp/message", payload, agent_id=effective_agent_id, **kw)
+        return self._parse_mcp_response(data)
+
+    async def mcp_forget(
+        self,
+        memory_id: str,
+        *,
+        agent_id: Optional[str] = None,
+        **kw,
+    ) -> str:
+        """Delete a memory by ID via the MCP ``forget`` tool."""
+        effective_agent_id = agent_id or self.agent_id
+        payload = {
+            "jsonrpc": "2.0",
+            "method": "tools/call",
+            "params": {
+                "name": "forget",
+                "arguments": {"id": memory_id},
+            },
+            "id": 5,
+        }
+        data = await self._api_post("/mcp/message", payload, agent_id=effective_agent_id, **kw)
+        return self._parse_mcp_response(data)
+
     async def mount_memory(
         self,
         domain: Optional[str] = None,

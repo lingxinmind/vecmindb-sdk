@@ -123,6 +123,10 @@ for hit in hits:
 `add_text` / `search_text` are also available on `AsyncVecminClient`.
 Advanced users can still pass raw vectors via `create_vector` / `search`.
 
+Full memory lifecycle is exposed via MCP-backed helpers on the client
+(`mcp_get_memory` / `mcp_list_memories` / `mcp_forget`) and on mounted
+memory spaces (`get_memory` / `list_memories` / `forget`).
+
 **TypeScript**
 
 ```ts

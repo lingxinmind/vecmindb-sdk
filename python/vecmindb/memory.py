@@ -163,6 +163,35 @@ class VecminMemorySpace:
         except Exception:
             return [{"text": res_str}]
 
+    def get_memory(self, memory_id: str, **kwargs) -> Dict[str, Any]:
+        """Retrieve a single memory by ID (full text + metadata)."""
+        res_str = self.client.mcp_get_memory(memory_id, **kwargs)
+        try:
+            parsed = json.loads(res_str)
+            return parsed if isinstance(parsed, dict) else {"text": res_str}
+        except Exception:
+            return {"text": res_str}
+
+    def list_memories(self, limit: int = 20, **kwargs) -> List[Dict[str, Any]]:
+        """Enumerate the caller's memories (id + text + metadata)."""
+        res_str = self.client.mcp_list_memories(limit=limit, **kwargs)
+        try:
+            parsed = json.loads(res_str)
+            if isinstance(parsed, list):
+                return parsed
+            return [{"text": res_str}]
+        except Exception:
+            return [{"text": res_str}]
+
+    def forget(self, memory_id: str, **kwargs) -> Dict[str, Any]:
+        """Delete a memory by ID."""
+        res_str = self.client.mcp_forget(memory_id, **kwargs)
+        try:
+            parsed = json.loads(res_str)
+            return parsed if isinstance(parsed, dict) else {"text": res_str}
+        except Exception:
+            return {"text": res_str}
+
     def evolve(self, **kwargs) -> Dict[str, Any]:
         """Trigger cognitive evolution of memories under this sovereignty space.
 
@@ -280,6 +309,35 @@ class AsyncVecminMemorySpace:
             return [{"text": res_str}]
         except Exception:
             return [{"text": res_str}]
+
+    async def get_memory(self, memory_id: str, **kwargs) -> Dict[str, Any]:
+        """Retrieve a single memory by ID (full text + metadata) asynchronously."""
+        res_str = await self.client.mcp_get_memory(memory_id, **kwargs)
+        try:
+            parsed = json.loads(res_str)
+            return parsed if isinstance(parsed, dict) else {"text": res_str}
+        except Exception:
+            return {"text": res_str}
+
+    async def list_memories(self, limit: int = 20, **kwargs) -> List[Dict[str, Any]]:
+        """Enumerate the caller's memories (id + text + metadata) asynchronously."""
+        res_str = await self.client.mcp_list_memories(limit=limit, **kwargs)
+        try:
+            parsed = json.loads(res_str)
+            if isinstance(parsed, list):
+                return parsed
+            return [{"text": res_str}]
+        except Exception:
+            return [{"text": res_str}]
+
+    async def forget(self, memory_id: str, **kwargs) -> Dict[str, Any]:
+        """Delete a memory by ID asynchronously."""
+        res_str = await self.client.mcp_forget(memory_id, **kwargs)
+        try:
+            parsed = json.loads(res_str)
+            return parsed if isinstance(parsed, dict) else {"text": res_str}
+        except Exception:
+            return {"text": res_str}
 
     async def evolve(self, **kwargs) -> Dict[str, Any]:
         """Trigger cognitive evolution of memories asynchronously under this sovereignty space.
