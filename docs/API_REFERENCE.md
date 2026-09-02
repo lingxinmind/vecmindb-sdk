@@ -94,13 +94,46 @@ curl -H "Authorization: Bearer <jwt-token>" http://localhost:5520/api/v1/collect
 |:----|:------------|
 | **Admin Key** (`security.admin_key`) | Full read/write/governance access |
 | **Viewer Key** (`security.viewer_key`) | Read-only (`GET`) and search operations |
+| **Tenant Key** (`security.tenant_keys`) | Bound to one tenant: full access to that tenant's own `mem_<tenant>` collection, read-only on explicitly granted shared collections (see [Tenant Management](#tenant-management)) |
 
 > **Note:** The following paths do **not** require authentication:
 > - `/healthz/live`, `/healthz/ready`, `/healthz/startup`
-> - `/dashboard`
-> - `/metrics`
 > - `/api/v1/health`
 > - `/api/v1/cluster/login`
+>
+> `/dashboard` and `/metrics` **do** require a valid key.
+
+---
+
+## Tenant Management
+
+### Create Tenant (Admin Only)
+
+`POST /api/v1/tenants` provisions the tenant's `mem_<name>` collection and
+issues its static API key. The key is returned **exactly once** — record it
+before handing it to the team.
+
+```bash
+curl -X POST http://localhost:5520/api/v1/tenants \
+  -H "x-api-key: <admin-key>" -H "Content-Type: application/json" \
+  -d '{"name":"dev_team"}'
+```
+
+```json
+{"success": true, "data": {"tenant": "dev_team", "collection": "mem_dev_team", "key": "..."}}
+```
+
+- Tenant names: `<= 64` chars of ASCII letters, digits, `_` or `-`
+- Re-creating an existing tenant rotates its key (old key stops working)
+- Only the admin key may call this endpoint
+
+### Collection Visibility
+
+`GET /api/v1/collections` returns what the calling key may see: the admin
+key sees every collection; a tenant key sees its own collection plus any
+collections explicitly granted in `tenant_grants` (read-only shared
+knowledge bases). The legacy `default` collection belongs to the default
+tenant (admin/viewer keys).
 
 ---
 

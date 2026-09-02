@@ -125,7 +125,46 @@ Advanced users can still pass raw vectors via `create_vector` / `search`.
 
 Full memory lifecycle is exposed via MCP-backed helpers on the client
 (`mcp_get_memory` / `mcp_list_memories` / `mcp_forget`) and on mounted
-memory spaces (`get_memory` / `list_memories` / `forget`).
+memory spaces (`get_memory` / `list_memories` / `forget`). The dedicated
+`McpClient` / `SyncMcpClient` (Python) and `VecminMCPClient` (TypeScript)
+cover all nine server MCP tools: `store_memory`, `search_memory`,
+`list_memories`, `get_memory`, `forget`, `memory_status`, `consolidate`,
+`register_factuality_template`, `remove_factuality_template`.
+
+### Multi-Tenant & Memory Tools
+
+A tenant key is a team's identity: pass it as `api_key` and every call is
+automatically bound to that tenant's `mem_<tenant>` collection — there is
+no client-side collection override. The admin key manages tenants:
+
+**Python**
+
+```python
+from vecmindb import VecminClient
+
+admin = VecminClient(base_url="http://localhost:5520", api_key="ADMIN_KEY")
+tenant = admin.create_tenant("dev_team")          # -> {"tenant": ..., "collection": ..., "key": ...}
+print(tenant["key"])                              # shown exactly once; hand it to the team
+
+# The team connects with their own key — isolation is automatic.
+team = VecminClient(base_url="http://localhost:5520", api_key=tenant["key"])
+visible = team.list_tenants()                     # own collection + granted shared collections
+```
+
+**TypeScript**
+
+```ts
+const admin = new VecminClient({ baseUrl: "...", apiKey: "ADMIN_KEY" });
+const tenant = await admin.createTenant("dev_team");   // { tenant, collection, key }
+const team = new VecminClient({ baseUrl: "...", apiKey: tenant.key });
+const visible = await team.listTenants();
+```
+
+Cross-team sharing is explicit and read-only: the admin lists collections
+in `tenant_grants` in the server config (`dev_team: ["mem_shared_org"]`,
+restart required), after which `search_memory` / `list_memories` federate
+over the tenant's own collection plus granted ones, labeling shared hits
+`(shared: mem_shared_org)`. See the MCP guide for the full model.
 
 **TypeScript**
 
