@@ -55,14 +55,17 @@ class TestAgentMemory(unittest.IsolatedAsyncioTestCase):
         res = client.mcp_store_memory("my memory content")
         self.assertEqual(res, "Stored successfully")
 
-        # Verify extra headers and arguments propagation
+        # Verify schema-aligned arguments propagation: the server binds
+        # sovereignty/model to the API key, so they are not tool arguments.
         mock_post.assert_called_once()
         args = mock_post.call_args[0]
         kwargs = mock_post.call_args[1]
         self.assertEqual(args[0], "/mcp/message")
         self.assertEqual(args[1]["params"]["arguments"]["agent_id"], "a1")
-        self.assertEqual(args[1]["params"]["arguments"]["sovereignty_token"], "t1")
-        self.assertEqual(args[1]["params"]["arguments"]["model_id"], "t1")
+        self.assertEqual(args[1]["params"]["arguments"]["text"], "my memory content")
+        self.assertEqual(args[1]["params"]["arguments"]["metadata"], {"source": "sdk"})
+        self.assertNotIn("sovereignty_token", args[1]["params"]["arguments"])
+        self.assertNotIn("model_id", args[1]["params"]["arguments"])
         self.assertEqual(kwargs.get("agent_id"), "a1")
         self.assertEqual(kwargs.get("model_id"), "t1")
 
@@ -86,10 +89,12 @@ class TestAgentMemory(unittest.IsolatedAsyncioTestCase):
         space = client.mount_memory(domain="my_domain")
         self.assertIsInstance(space, VecminMemorySpace)
         mock_ensure.assert_called_once_with(
-            "my_domain",
-            dimension=1536,
+            "agent_memory",
+            dimension=1024,
             metric_type="Cosine",
             index_type="HNSW",
+            domain="my_domain",
+            sovereignty_token="sovereign_wonderland",
         )
 
         # Store memory

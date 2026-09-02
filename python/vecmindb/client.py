@@ -756,13 +756,14 @@ class VecminClient:
             "method": "tools/call",
             "params": {
                 "name": "store_memory",
+                # Schema-aligned arguments: the server binds sovereignty and
+                # the target collection to the API key, so those fields are
+                # not tool arguments. 'source' folds into metadata.
                 "arguments": {
                     "agent_id": effective_agent_id,
                     "text": content,
-                    "source": source,
-                    "sovereignty_token": effective_token,
-                    "model_id": effective_model_id,
                     "is_factual": is_factual,
+                    "metadata": {"source": source} if source else {},
                 },
             },
             "id": 1,
@@ -789,12 +790,12 @@ class VecminClient:
             "method": "tools/call",
             "params": {
                 "name": "search_memory",
+                # Schema-aligned arguments: sovereignty/model are bound to
+                # the API key server-side, not passed as tool arguments.
                 "arguments": {
                     "agent_id": effective_agent_id,
                     "query": query,
                     "top_k": top_k,
-                    "sovereignty_token": effective_token,
-                    "model_id": effective_model_id,
                 },
             },
             "id": 2,
