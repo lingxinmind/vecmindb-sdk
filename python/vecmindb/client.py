@@ -307,6 +307,34 @@ class VecminClient:
             return [CollectionInfo(**items)]
         return []
 
+    def create_tenant(self, name: str, **kw) -> Dict[str, Any]:
+        """Create a tenant (``POST /api/v1/tenants``, admin key only).
+
+        Provisions the tenant's ``mem_<name>`` collection and issues its
+        static API key, persisted server-side. The key is returned exactly
+        once — record it before handing it to the team. A tenant key is the
+        team's identity: pass it as ``api_key`` and every subsequent call is
+        automatically bound to that tenant's collection.
+
+        Args:
+            name: Tenant name (<=64 chars of ASCII letters, digits, '_' or '-').
+
+        Returns:
+            Payload with ``tenant``, ``collection`` and ``key`` fields.
+        """
+        data = self._api_post("/tenants", {"name": name}, **kw)
+        res_data = data.get("data") if isinstance(data, dict) else None
+        return res_data if isinstance(res_data, dict) else data
+
+    def list_tenants(self, **kw) -> List[CollectionInfo]:
+        """List collections visible to the current key (``GET /api/v1/collections``).
+
+        The admin key sees every tenant collection (``mem_*`` plus the legacy
+        ``default``); a tenant key only sees its own collection and explicitly
+        granted shared collections.
+        """
+        return self.list_collections(**kw)
+
     def get_collection(self, name: str, **kw) -> CollectionInfo:
         """Get collection details (``GET /api/v1/collections/{name}``)."""
         data = self._api_get(f"/collections/{name}", **kw)

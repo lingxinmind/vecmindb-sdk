@@ -14,6 +14,12 @@ import type {
   MCPClientOptions,
   StoreMemoryParams,
   SearchMemoryParams,
+  ListMemoriesParams,
+  GetMemoryParams,
+  ForgetParams,
+  MemoryStatusParams,
+  ConsolidateParams,
+  FactualityTemplateParams,
   MCPSearchResult,
   JsonRpcRequest,
   JsonRpcResponse,
@@ -304,13 +310,17 @@ export class VecminMCPClient {
    * ```
    */
   async storeMemory(params: StoreMemoryParams): Promise<void> {
+    const metadata = {
+      ...(params.metadata ?? {}),
+      ...(params.source ? { source: params.source } : {}),
+    };
     await this.rpc("tools/call", {
       name: "store_memory",
       arguments: {
         agent_id: params.agent_id,
         text: params.text,
-        source: params.source ?? "typescript-sdk",
-        collection: params.collection ?? "agent_memory_mcp",
+        is_factual: params.is_factual ?? false,
+        ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
       },
     });
   }
@@ -330,10 +340,89 @@ export class VecminMCPClient {
         agent_id: params.agent_id,
         query: params.query,
         top_k: params.top_k ?? 5,
-        collection: params.collection ?? "agent_memory_mcp",
       },
     });
     return result;
+  }
+
+  /**
+   * Call the `list_memories` MCP tool: enumerate the caller's own memories
+   * (id, full text, metadata), newest first.
+   */
+  async listMemories(params: ListMemoriesParams = {}): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "list_memories",
+      arguments: { limit: params.limit ?? 20 },
+    });
+  }
+
+  /**
+   * Call the `get_memory` MCP tool: retrieve a single memory by vector ID.
+   */
+  async getMemory(params: GetMemoryParams): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "get_memory",
+      arguments: { id: params.id },
+    });
+  }
+
+  /**
+   * Call the `forget` MCP tool: delete one or more memories by ID.
+   */
+  async forgetMemory(params: ForgetParams): Promise<unknown> {
+    const arguments_: Record<string, unknown> = {
+      collection: params.collection ?? "default",
+    };
+    if (params.id !== undefined) arguments_["id"] = params.id;
+    if (params.ids !== undefined) arguments_["ids"] = params.ids;
+    if (params.sovereignty_token !== undefined) {
+      arguments_["sovereignty_token"] = params.sovereignty_token;
+    }
+    return this.rpc("tools/call", { name: "forget", arguments: arguments_ });
+  }
+
+  /**
+   * Call the `memory_status` MCP tool: report the LTSM memory lifecycle.
+   */
+  async memoryStatus(params: MemoryStatusParams = {}): Promise<unknown> {
+    const arguments_: Record<string, unknown> = {
+      collection: params.collection ?? "default",
+    };
+    if (params.agent_id !== undefined) arguments_["agent_id"] = params.agent_id;
+    return this.rpc("tools/call", { name: "memory_status", arguments: arguments_ });
+  }
+
+  /**
+   * Call the `consolidate` MCP tool: trigger an LTSM distillation cycle.
+   */
+  async consolidate(params: ConsolidateParams = {}): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "consolidate",
+      arguments: {
+        collection: params.collection ?? "default",
+        force: params.force ?? false,
+      },
+    });
+  }
+
+  /**
+   * Call the `register_factuality_template` MCP tool.
+   */
+  async registerFactualityTemplate(params: FactualityTemplateParams): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "register_factuality_template",
+      arguments: { text: params.text, template_type: params.template_type },
+    });
+  }
+
+  /**
+   * Call the `remove_factuality_template` MCP tool.
+   */
+  async removeFactualityTemplate(params: { text: string }): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "remove_factuality_template",
+      arguments: { text: params.text },
+    });
   }
 
   // -----------------------------------------------------------------------

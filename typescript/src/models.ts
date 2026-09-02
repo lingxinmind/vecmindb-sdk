@@ -269,24 +269,74 @@ export interface MCPClientOptions {
 export interface StoreMemoryParams {
   /** The text content to store. */
   text: string;
-  /** Agent identifier. */
+  /** Agent identifier (the server overrides this with the authenticated
+   * identity bound to the API key). */
   agent_id: string;
-  /** Source tag. */
+  /** Source tag, folded into the memory metadata. */
   source?: string;
-  /** Override target collection. */
-  collection?: string;
+  /** If true, permanently exempts this memory from LTSM forgetting. */
+  is_factual?: boolean;
+  /** Optional metadata as a JSON object. */
+  metadata?: Record<string, unknown>;
 }
 
 /** Parameters for the `search_memory` MCP tool. */
 export interface SearchMemoryParams {
   /** Natural-language query. */
   query: string;
-  /** Agent identifier to scope the search. */
+  /** Agent identifier (the server overrides this with the authenticated
+   * identity bound to the API key). */
   agent_id: string;
   /** Number of results. @default 5 */
   top_k?: number;
-  /** Override target collection. */
+}
+
+/** Parameters for the `list_memories` MCP tool. */
+export interface ListMemoriesParams {
+  /** Maximum number of memories to return. @default 20 */
+  limit?: number;
+}
+
+/** Parameters for the `get_memory` MCP tool. */
+export interface GetMemoryParams {
+  /** The memory vector ID returned by store_memory or search_memory. */
+  id: string;
+}
+
+/** Parameters for the `forget` MCP tool. */
+export interface ForgetParams {
+  /** Single vector ID to forget. */
+  id?: string;
+  /** Multiple vector IDs to forget. */
+  ids?: string[];
+  /** Target collection. @default "default" */
   collection?: string;
+  /** Sovereignty token; defaults to the collection authority token. */
+  sovereignty_token?: string;
+}
+
+/** Parameters for the `memory_status` MCP tool. */
+export interface MemoryStatusParams {
+  /** Optional agent identity filter. */
+  agent_id?: string;
+  /** Collection to inspect. @default "default" */
+  collection?: string;
+}
+
+/** Parameters for the `consolidate` MCP tool. */
+export interface ConsolidateParams {
+  /** Collection to consolidate. @default "default" */
+  collection?: string;
+  /** Run a full evolution cycle when true. @default false */
+  force?: boolean;
+}
+
+/** Parameters for the factuality template tools. */
+export interface FactualityTemplateParams {
+  /** The template sentence text. */
+  text: string;
+  /** Concept type: either 'profile' or 'rule'. */
+  template_type: string;
 }
 
 /** JSON-RPC 2.0 request envelope. */

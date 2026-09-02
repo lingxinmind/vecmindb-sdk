@@ -211,6 +211,35 @@ export class VecminClient {
   }
 
   /**
+   * Create a tenant (POST /api/v1/tenants, admin key only).
+   *
+   * Provisions the tenant's `mem_<name>` collection and issues its static
+   * API key, persisted server-side. The key is returned exactly once —
+   * record it before handing it to the team. A tenant key is the team's
+   * identity: pass it as `apiKey` and every subsequent call is automatically
+   * bound to that tenant's collection.
+   */
+  async createTenant(name: string): Promise<{ tenant: string; collection: string; key: string }> {
+    const res = await this.post<unknown>("/tenants", { name });
+    const body = res as { data?: { tenant: string; collection: string; key: string } };
+    if (body && typeof body === "object" && "data" in body && body.data) {
+      return body.data;
+    }
+    throw new Error(`Unexpected tenant creation response: ${JSON.stringify(res)}`);
+  }
+
+  /**
+   * List collections visible to the current key (GET /api/v1/collections).
+   *
+   * The admin key sees every tenant collection (`mem_*` plus the legacy
+   * `default`); a tenant key only sees its own collection and explicitly
+   * granted shared collections.
+   */
+  async listTenants(): Promise<Collection[]> {
+    return this.listCollections();
+  }
+
+  /**
    * Get details for a specific collection.
    *
    * @example

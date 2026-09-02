@@ -340,24 +340,31 @@ class McpClient:
         content: str,
         *,
         agent_id: str = "default",
-        source: str = "sdk",
+        source: Optional[str] = "sdk",
         is_factual: bool = False,
     ) -> Any:
         """Store a memory via the ``store_memory`` MCP tool.
 
         Args:
             content: Text content to remember.
-            agent_id: Agent or session identifier.
-            source: Origin of the memory.
+            agent_id: Agent or session identifier (server overrides this with
+                the authenticated identity bound to the API key).
+            source: Optional origin tag, stored in the memory metadata.
             is_factual: If true, exempts this memory from biological forgetting.
 
         Returns:
             Tool result.
         """
-        return await self.call_tool(
-            "store_memory",
-            {"agent_id": agent_id, "text": content, "source": source, "is_factual": is_factual},
-        )
+        arguments: Dict[str, Any] = {
+            "agent_id": agent_id,
+            "text": content,
+            "is_factual": is_factual,
+        }
+        if source:
+            # The server schema has no top-level "source" field; fold it into
+            # the documented metadata object instead.
+            arguments["metadata"] = {"source": source}
+        return await self.call_tool("store_memory", arguments)
 
     async def search_memory(
         self,
@@ -370,7 +377,8 @@ class McpClient:
 
         Args:
             query: Natural-language search query.
-            agent_id: Agent or session identifier.
+            agent_id: Agent or session identifier (server overrides this with
+                the authenticated identity bound to the API key).
             top_k: Number of results.
 
         Returns:
@@ -380,6 +388,117 @@ class McpClient:
             "search_memory",
             {"agent_id": agent_id, "query": query, "top_k": top_k},
         )
+
+    async def list_memories(self, *, limit: int = 20) -> Any:
+        """List the caller's own memories via the ``list_memories`` MCP tool.
+
+        Args:
+            limit: Maximum number of memories to return.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("list_memories", {"limit": limit})
+
+    async def get_memory(self, memory_id: str) -> Any:
+        """Fetch one memory by its vector ID via the ``get_memory`` MCP tool.
+
+        Args:
+            memory_id: Vector ID returned by store_memory / search_memory.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("get_memory", {"id": memory_id})
+
+    async def forget_memory(
+        self,
+        *,
+        memory_id: Optional[str] = None,
+        memory_ids: Optional[List[str]] = None,
+        collection: str = "default",
+        sovereignty_token: Optional[str] = None,
+    ) -> Any:
+        """Delete memories via the ``forget`` MCP tool.
+
+        Args:
+            memory_id: Single vector ID to forget.
+            memory_ids: Multiple vector IDs to forget.
+            collection: Target collection.
+            sovereignty_token: Sovereignty token; defaults to the collection
+                authority token when omitted.
+
+        Returns:
+            Tool result.
+        """
+        arguments: Dict[str, Any] = {"collection": collection}
+        if memory_id is not None:
+            arguments["id"] = memory_id
+        if memory_ids is not None:
+            arguments["ids"] = memory_ids
+        if sovereignty_token is not None:
+            arguments["sovereignty_token"] = sovereignty_token
+        return await self.call_tool("forget", arguments)
+
+    async def memory_status(
+        self,
+        *,
+        agent_id: Optional[str] = None,
+        collection: str = "default",
+    ) -> Any:
+        """Report the LTSM memory lifecycle via the ``memory_status`` MCP tool.
+
+        Args:
+            agent_id: Optional agent identity filter.
+            collection: Collection to inspect.
+
+        Returns:
+            Tool result.
+        """
+        arguments: Dict[str, Any] = {"collection": collection}
+        if agent_id is not None:
+            arguments["agent_id"] = agent_id
+        return await self.call_tool("memory_status", arguments)
+
+    async def consolidate(self, *, collection: str = "default", force: bool = False) -> Any:
+        """Trigger an LTSM distillation cycle via the ``consolidate`` MCP tool.
+
+        Args:
+            collection: Collection to consolidate.
+            force: Run a full evolution cycle when true.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("consolidate", {"collection": collection, "force": force})
+
+    async def register_factuality_template(self, text: str, template_type: str) -> Any:
+        """Register a factuality baseline template via the
+        ``register_factuality_template`` MCP tool.
+
+        Args:
+            text: The template sentence text.
+            template_type: Concept type — either 'profile' or 'rule'.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool(
+            "register_factuality_template",
+            {"text": text, "template_type": template_type},
+        )
+
+    async def remove_factuality_template(self, text: str) -> Any:
+        """Remove a factuality template via the ``remove_factuality_template``
+        MCP tool.
+
+        Args:
+            text: The exact template sentence text to remove.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("remove_factuality_template", {"text": text})
 
 
 # ---------------------------------------------------------------------------
@@ -506,10 +625,53 @@ class SyncMcpClient:
         response.raise_for_error()
         return response.result
 
-    def store_memory(self, content: str, *, agent_id: str = "default", source: str = "sdk", is_factual: bool = False) -> Any:
+    def store_memory(self, content: str, *, agent_id: str = "default", source: Optional[str] = "sdk", is_factual: bool = False) -> Any:
         """Store a memory via the ``store_memory`` MCP tool."""
-        return self.call_tool("store_memory", {"agent_id": agent_id, "text": content, "source": source, "is_factual": is_factual})
+        arguments: Dict[str, Any] = {"agent_id": agent_id, "text": content, "is_factual": is_factual}
+        if source:
+            arguments["metadata"] = {"source": source}
+        return self.call_tool("store_memory", arguments)
 
     def search_memory(self, query: str, *, agent_id: str = "default", top_k: int = 5) -> Any:
         """Search memories via the ``search_memory`` MCP tool."""
         return self.call_tool("search_memory", {"agent_id": agent_id, "query": query, "top_k": top_k})
+
+    def list_memories(self, *, limit: int = 20) -> Any:
+        """List the caller's own memories via the ``list_memories`` MCP tool."""
+        return self.call_tool("list_memories", {"limit": limit})
+
+    def get_memory(self, memory_id: str) -> Any:
+        """Fetch one memory by its vector ID via the ``get_memory`` MCP tool."""
+        return self.call_tool("get_memory", {"id": memory_id})
+
+    def forget_memory(self, *, memory_id: Optional[str] = None, memory_ids: Optional[List[str]] = None, collection: str = "default", sovereignty_token: Optional[str] = None) -> Any:
+        """Delete memories via the ``forget`` MCP tool."""
+        arguments: Dict[str, Any] = {"collection": collection}
+        if memory_id is not None:
+            arguments["id"] = memory_id
+        if memory_ids is not None:
+            arguments["ids"] = memory_ids
+        if sovereignty_token is not None:
+            arguments["sovereignty_token"] = sovereignty_token
+        return self.call_tool("forget", arguments)
+
+    def memory_status(self, *, agent_id: Optional[str] = None, collection: str = "default") -> Any:
+        """Report the LTSM memory lifecycle via the ``memory_status`` MCP tool."""
+        arguments: Dict[str, Any] = {"collection": collection}
+        if agent_id is not None:
+            arguments["agent_id"] = agent_id
+        return self.call_tool("memory_status", arguments)
+
+    def consolidate(self, *, collection: str = "default", force: bool = False) -> Any:
+        """Trigger an LTSM distillation cycle via the ``consolidate`` MCP tool."""
+        return self.call_tool("consolidate", {"collection": collection, "force": force})
+
+    def register_factuality_template(self, text: str, template_type: str) -> Any:
+        """Register a factuality baseline template via the
+        ``register_factuality_template`` MCP tool."""
+        return self.call_tool("register_factuality_template", {"text": text, "template_type": template_type})
+
+    def remove_factuality_template(self, text: str) -> Any:
+        """Remove a factuality template via the ``remove_factuality_template``
+        MCP tool."""
+        return self.call_tool("remove_factuality_template", {"text": text})
