@@ -233,6 +233,8 @@ export interface MCPOptions {
   collection?: string;
   /** Source tag for the memory. */
   source?: string;
+  /** Mark durable constraints/decisions for strong anchoring. */
+  isFactual?: boolean;
   /** Embedding dimension. @default 384 */
   dimension?: number;
 }

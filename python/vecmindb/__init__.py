@@ -73,6 +73,13 @@ from .memory import (
     VecminMemorySpace,
     AsyncVecminMemorySpace,
 )
+from .agent_turns import (
+    AgentMemory,
+    AsyncAgentMemory,
+    agent_memory,
+    async_agent_memory,
+    auto_summary,
+)
 from typing import Optional
 
 __version__ = "1.0.6"
@@ -107,6 +114,12 @@ __all__ = [
     "McpClient",
     "SyncMcpClient",
     "connect",
+    # Turn-loop memory primitives for custom agents
+    "AgentMemory",
+    "AsyncAgentMemory",
+    "agent_memory",
+    "async_agent_memory",
+    "auto_summary",
     # Exceptions
     "VecminError",
     "AuthenticationError",

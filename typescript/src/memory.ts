@@ -61,6 +61,12 @@ export class AgentMemoryManager {
   }
 }
 
+/** Store options for VecminMemorySpace.storeMemory. */
+export interface SpaceStoreOptions {
+  metadata?: Record<string, unknown>;
+  isFactual?: boolean;
+}
+
 export class VecminMemorySpace {
   constructor(
     private client: VecminClient,
@@ -72,12 +78,23 @@ export class VecminMemorySpace {
 
   /**
    * Store episodic text memory into this sovereign memory space.
+   * Accepts the legacy metadata-record form or the options object
+   * ({ metadata, isFactual }).
    */
-  async storeMemory(text: string, metadata?: Record<string, unknown>): Promise<string> {
+  async storeMemory(
+    text: string,
+    metadataOrOptions?: Record<string, unknown> | SpaceStoreOptions,
+  ): Promise<string> {
+    const opts: SpaceStoreOptions =
+      metadataOrOptions &&
+      "isFactual" in (metadataOrOptions as SpaceStoreOptions)
+        ? (metadataOrOptions as SpaceStoreOptions)
+        : { metadata: metadataOrOptions as Record<string, unknown> | undefined };
     return this.client.mcpStoreMemory(text, this.agentId, {
       sovereigntyToken: this.sovereigntyToken,
       modelId: this.modelId,
-      metadata,
+      metadata: opts.metadata,
+      isFactual: opts.isFactual,
     });
   }
 

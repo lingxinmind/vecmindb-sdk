@@ -9,6 +9,9 @@ description = "Python SDK for VecminDB - High-performance vector database HTTP c
 authors = [{email = "contact@lingxinmind.com", name = "VecminDB Team"}]
 license = {text = "MIT OR Apache-2.0"}
 readme = "README.md"
+
+[project.scripts]
+vecmindb-memory-init = "vecmindb.installer:main"
 requires-python = ">=3.8"
 keywords = ["vector-database", "similarity-search", "embedding", "sdk", "rag"]
 classifiers = [

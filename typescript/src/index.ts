@@ -18,6 +18,9 @@ export type { MCPEventMap } from "./mcp.js";
 
 // LangChain adapter (optional — only works when @langchain/core is installed)
 export { VecminDBVectorStore } from "./langchain.js";
+export { AgentMemory, autoSummary } from "./agent-turns.js";
+export type { AfterTurnOptions } from "./agent-turns.js";
+export type { SpaceStoreOptions } from "./memory.js";
 
 // Authentication manager
 export { AuthManager } from "./auth.js";

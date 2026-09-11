@@ -536,7 +536,8 @@ export class VecminClient {
               name: "store_memory",
               arguments: {
                 agent_id: agentId,
-                content: text,
+                text,
+                is_factual: options?.isFactual ?? false,
                 source: options?.source ?? "typescript-sdk",
                 collection: options?.collection ?? "agent_memory_mcp",
               },

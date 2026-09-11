@@ -80,6 +80,52 @@ pip install vecmindb[langchain]
 pip install vecmindb[crewai]
 ```
 
+#### Custom / self-written agents: two-line memory loop
+
+```python
+from vecmindb import agent_memory
+
+mem = agent_memory(endpoint="http://<host>:5520", api_key="<KEY>", agent_id="my-agent")
+
+def respond(user_message: str) -> str:
+    context = mem.before_turn(user_message)      # "" when nothing clears the relevance gate
+    reply = llm.generate(user_message, context)
+    mem.after_turn(user_message, reply)          # auto-summarized store
+    return reply
+```
+
+- `before_turn` returns a ready-to-inject context block, or an empty
+  string for unrelated queries (the server-side relevance gate
+  `memory.search_min_score` filters before the client ever sees results).
+- `after_turn` stores "question + first 200 chars of the reply" by
+  default; pass `summary="..."` to override, `summary=None` to skip,
+  `is_factual=True` for durable constraints.
+- Memory never breaks the agent: on any network failure both calls
+  degrade to no-ops with a warning.
+- Async variant: `from vecmindb import async_agent_memory`.
+
+#### Zero-config wiring for mainstream tools (installer)
+
+One command generates the scope-guarded memory rules for every detected
+agent tool — no hand-written rule files:
+
+```bash
+vecmindb-memory-init --dir /path/to/project            # detect & generate
+vecmindb-memory-init --dir . --all --dry-run           # preview everything
+vecmindb-memory-init --dir . --workbuddy-user          # also fix the user-level WorkBuddy profile
+```
+
+- Detects Claude Code (`CLAUDE.md`), Cursor (`.cursor/rules/`), and
+  WorkBuddy (`.workbuddy/AGENTS.md`) from the project layout.
+- Generated rules are scope-guarded (project-related questions only,
+  never project context onto unrelated topics) and gate-aware (the
+  server-side relevance gate answers "no relevant memory" for unrelated
+  queries).
+- Idempotent marked sections: re-runs replace the generated block only
+  and never touch surrounding content.
+- API keys never go into rule files — the MCP server connection stays in
+  each tool's own settings.
+
 ### Java SDK (Maven)
 
 ```xml
