@@ -21,7 +21,7 @@ import json
 import re
 import sys
 import urllib.request
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 def search(server: str, api_key: str, query: str, top_k: int) -> str:
@@ -90,7 +90,7 @@ def sweep(
     return results
 
 
-def main(argv: List[str] | None = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     p = argparse.ArgumentParser(prog="gate_calibrate")
     p.add_argument("--server", required=True)
     p.add_argument("--api-key", required=True)
