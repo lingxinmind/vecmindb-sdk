@@ -104,27 +104,20 @@ def respond(user_message: str) -> str:
   degrade to no-ops with a warning.
 - Async variant: `from vecmindb import async_agent_memory`.
 
-#### Zero-config wiring for mainstream tools (installer)
+#### Zero-config wiring for mainstream tools (one sentence)
 
-One command generates the scope-guarded memory rules for every detected
-agent tool — no hand-written rule files:
+Connect the MCP server in the tool, then ask the agent:
 
-```bash
-vecmindb-memory-init --dir /path/to/project            # detect & generate
-vecmindb-memory-init --dir . --all --dry-run           # preview everything
-vecmindb-memory-init --dir . --workbuddy-user          # also fix the user-level WorkBuddy profile
-```
+> Install the vecmindb memory rules for <tool>.
 
-- Detects Claude Code (`CLAUDE.md`), Cursor (`.cursor/rules/`), and
-  WorkBuddy (`.workbuddy/AGENTS.md`) from the project layout.
-- Generated rules are scope-guarded (project-related questions only,
-  never project context onto unrelated topics) and gate-aware (the
-  server-side relevance gate answers "no relevant memory" for unrelated
-  queries).
-- Idempotent marked sections: re-runs replace the generated block only
-  and never touch surrounding content.
-- API keys never go into rule files — the MCP server connection stays in
-  each tool's own settings.
+The agent calls the `get_memory_rules` MCP tool, which returns BOTH
+halves of the setup — the MCP connection fragment (mcp.json) and the
+scope-guarded rule block with the exact local path (Claude Code
+`CLAUDE.md` / Cursor `.cursor/rules/vecmindb-memory.mdc` / WorkBuddy
+`USER.md`) — and writes them after confirmation. The rules are
+project-conditional (never projected onto unrelated topics),
+gate-aware, and idempotent via marked sections. No marketplace, no
+installer command, no hand-written rule files.
 
 ### Java SDK (Maven)
 
