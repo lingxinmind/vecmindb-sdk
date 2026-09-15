@@ -106,18 +106,37 @@ def respond(user_message: str) -> str:
 
 #### Zero-config wiring for mainstream tools (one sentence)
 
-Connect the MCP server in the tool, then ask the agent:
+Connect the MCP server in the tool's own settings (endpoint + API key),
+then start a session and say:
 
-> Install the vecmindb memory rules for <tool>.
+> 安装 vecmindb 记忆规则
 
-The agent calls the `get_memory_rules` MCP tool, which returns BOTH
-halves of the setup — the MCP connection fragment (mcp.json) and the
+The agent calls the `get_memory_rules` MCP tool, which returns the
 scope-guarded rule block with the exact local path (Claude Code
 `CLAUDE.md` / Cursor `.cursor/rules/vecmindb-memory.mdc` / WorkBuddy
-`USER.md`) — and writes them after confirmation. The rules are
-project-conditional (never projected onto unrelated topics),
-gate-aware, and idempotent via marked sections. No marketplace, no
+`USER.md`); it shows the block to you and writes it after confirmation.
+The rules are project-conditional (never projected onto unrelated
+topics), gate-aware, and idempotent via marked sections. The MCP
+connection itself stays configured in the tool UI — no marketplace, no
 installer command, no hand-written rule files.
+
+### Rust SDK (crates.io)
+
+```toml
+[dependencies]
+vecmindb = "1.0"
+```
+
+Two-line agent loop (custom / self-written agents):
+
+```rust
+use vecmindb::AgentMemory;
+let mem = AgentMemory::connect("http://<host>:5520", "<KEY>", "my-agent");
+let context = mem.before_turn(query, 3)?;        // "" when nothing clears the gate
+let _id = mem.after_turn(query, &reply, None)?;  // auto-summarized store
+```
+
+See `sdk/rust/README.md` and the runnable `sdk/rust/examples/agent_memory.rs`.
 
 ### Java SDK (Maven)
 
@@ -166,9 +185,10 @@ Full memory lifecycle is exposed via MCP-backed helpers on the client
 (`mcp_get_memory` / `mcp_list_memories` / `mcp_forget`) and on mounted
 memory spaces (`get_memory` / `list_memories` / `forget`). The dedicated
 `McpClient` / `SyncMcpClient` (Python) and `VecminMCPClient` (TypeScript)
-cover all nine server MCP tools: `store_memory`, `search_memory`,
+cover all ten server MCP tools: `store_memory`, `search_memory`,
 `list_memories`, `get_memory`, `forget`, `memory_status`, `consolidate`,
-`register_factuality_template`, `remove_factuality_template`.
+`register_factuality_template`, `remove_factuality_template`,
+`get_memory_rules`.
 
 ### Multi-Tenant & Memory Tools
 

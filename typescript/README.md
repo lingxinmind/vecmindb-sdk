@@ -201,6 +201,34 @@ for (const m of memories) {
 }
 ```
 
+### Agent Memory (two-line loop for custom agents)
+
+```typescript
+import { AgentMemory } from "@vecmindb/sdk";
+import { VecminMemorySpace, VecminClient } from "@vecmindb/sdk";
+
+const client = new VecminClient({ baseUrl: "http://localhost:5520", apiKey: "..." });
+const mem = new AgentMemory(new VecminMemorySpace(client, "default", "my-agent", "", ""));
+
+function respond(userMessage: string) {
+  const context = await mem.beforeTurn(userMessage); // "" when nothing clears the relevance gate
+  const reply = yourLlm(userMessage, context);
+  await mem.afterTurn(userMessage, reply); // auto-summarized store
+  return reply;
+}
+```
+
+- `beforeTurn` returns a ready-to-inject context block, or an empty
+  string for unrelated queries (the server-side relevance gate
+  `memory.search_min_score`, default 0.70, filters before the client
+  ever sees results).
+- `afterTurn` stores "question + first 200 chars of the reply" by
+  default; pass `{ summary: "..." }` to override, `{ summary: null }` to
+  skip, `{ isFactual: true }` for durable constraints.
+- Memory never breaks the agent: on any network failure both calls
+  degrade to no-ops with a warning.
+- Runnable example: `examples/agent-memory-loop.ts`.
+
 ### Low-level MCP Client (SSE + JSON-RPC)
 
 ```typescript

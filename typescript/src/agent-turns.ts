@@ -71,7 +71,21 @@ function extractContext(results: unknown): string {
     return lines.join("\n");
   }
   if (Array.isArray(results)) {
-    const hits = (results as HitLike[]).filter((h) => h && (h.text || h.content));
+    const arr = results as HitLike[];
+    // The memory space wraps a raw server report as a single-element
+    // array ({ text: report }). Route it through the report parser
+    // (gate check + score/Text extraction) instead of rendering it as
+    // a hit; anything unparseable falls out as "".
+    const first = arr[0];
+    if (
+      arr.length === 1 &&
+      first &&
+      typeof first.text === "string" &&
+      typeof first.score !== "number"
+    ) {
+      return extractContext(first.text);
+    }
+    const hits = arr.filter((h) => h && (h.text || h.content));
     if (hits.length === 0) return "";
     const lines = ["[Relevant memories]"];
     for (const h of hits) {

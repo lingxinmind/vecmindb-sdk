@@ -52,7 +52,10 @@
   },
   "devDependencies": {
     "@langchain/core": "^0.3.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0"
   },
@@ -63,5 +66,15 @@
     "type": "git",
     "url": "https://github.com/lingxinmind/vecminDB.git",
     "directory": "sdk/typescript"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/__tests__/**/*.test.ts"
+    ],
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    }
   }
 }

@@ -520,10 +520,10 @@ export class VecminClient {
     text: string,
     agentId: string,
     options?: MCPOptions,
-  ): Promise<void> {
+  ): Promise<string> {
     const controller = this.createController();
     try {
-      await fetchJson<unknown>(
+      const raw = await fetchJson<unknown>(
         `${this.mcpUrl}/messages`,
         {
           method: "POST",
@@ -547,6 +547,10 @@ export class VecminClient {
         },
         this.retryOptions,
       );
+      // The server responds with "Memory successfully anchored ..." — return
+      // the raw text so callers can surface the anchor outcome.
+      if (typeof raw === "string") return raw;
+      return JSON.stringify(raw);
     } finally {
       this.controllers.delete(controller);
     }
@@ -563,8 +567,9 @@ export class VecminClient {
   async mcpSearchMemory(
     query: string,
     agentId: string,
-    topK = 5,
+    options: (MCPOptions & { topK?: number }) | number = 5,
   ): Promise<MCPSearchResult[]> {
+    const topK = typeof options === "number" ? options : (options.topK ?? 5);
     const controller = this.createController();
     try {
       const result = await fetchJson<MCPSearchResult[]>(

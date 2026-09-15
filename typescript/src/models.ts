@@ -61,6 +61,8 @@ export interface CreateCollectionParams {
   index_type?: IndexType;
   /** Algorithm-specific parameters. */
   index_params?: Record<string, unknown>;
+  /** Optional domain/namespace tag for the collection. */
+  domain?: string;
 }
 
 /** A VecminDB collection. */
@@ -237,6 +239,12 @@ export interface MCPOptions {
   isFactual?: boolean;
   /** Embedding dimension. @default 384 */
   dimension?: number;
+  /** Sovereignty token (bound server-side to the API key; accepted for parity). */
+  sovereigntyToken?: string;
+  /** Model id (bound server-side to the API key; accepted for parity). */
+  modelId?: string;
+  /** Optional metadata payload for the memory. */
+  metadata?: Record<string, unknown>;
 }
 
 /** A single MCP search result. */
