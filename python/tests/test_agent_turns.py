@@ -80,7 +80,7 @@ class TestAgentMemoryBeforeTurn(unittest.TestCase):
 
     def test_gated_empty_returns_empty_string(self) -> None:
         mem = self._mem(
-            "No relevant memory found in domain 'system' (no match cleared threshold 0.5)."
+            "No relevant memory found in domain 'system' (no match cleared threshold 0.70)."
         )
         self.assertEqual(mem.before_turn("无关话题"), "")
 
