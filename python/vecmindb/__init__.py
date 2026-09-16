@@ -82,7 +82,7 @@ from .agent_turns import (
 )
 from typing import Optional
 
-__version__ = "1.0.6"
+__version__ = "1.1.0"
 
 
 def connect(
