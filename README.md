@@ -124,13 +124,13 @@ installer command, no hand-written rule files.
 
 ```toml
 [dependencies]
-vecmindb = "1.0"
+vecmindb-client = "1.0"
 ```
 
 Two-line agent loop (custom / self-written agents):
 
 ```rust
-use vecmindb::AgentMemory;
+use vecmindb_client::AgentMemory;
 let mem = AgentMemory::connect("http://<host>:5520", "<KEY>", "my-agent");
 let context = mem.before_turn(query, 3)?;        // "" when nothing clears the gate
 let _id = mem.after_turn(query, &reply, None)?;  // auto-summarized store
