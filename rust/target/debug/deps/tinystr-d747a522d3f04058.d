@@ -1,0 +1,14 @@
+/opt/vecminDB/sdk/rust/target/debug/deps/tinystr-d747a522d3f04058.d: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/macros.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ascii.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/asciibyte.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/error.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/int_ops.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/unvalidated.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ule.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libtinystr-d747a522d3f04058.rlib: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/macros.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ascii.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/asciibyte.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/error.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/int_ops.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/unvalidated.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ule.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libtinystr-d747a522d3f04058.rmeta: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/macros.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ascii.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/asciibyte.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/error.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/int_ops.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/unvalidated.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ule.rs
+
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/lib.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/macros.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ascii.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/asciibyte.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/error.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/int_ops.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/unvalidated.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tinystr-0.8.4/src/ule.rs:

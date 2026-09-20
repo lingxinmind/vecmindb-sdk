@@ -1,0 +1,14 @@
+/opt/vecminDB/sdk/rust/target/debug/deps/tracing-11544dcc674d6904.d: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/macros.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/dispatcher.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/field.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/instrument.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/level_filters.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/span.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/subscriber.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libtracing-11544dcc674d6904.rlib: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/macros.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/dispatcher.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/field.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/instrument.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/level_filters.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/span.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/subscriber.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libtracing-11544dcc674d6904.rmeta: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/macros.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/dispatcher.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/field.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/instrument.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/level_filters.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/span.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/subscriber.rs
+
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/lib.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/macros.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/dispatcher.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/field.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/instrument.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/level_filters.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/span.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/tracing-0.1.44/src/subscriber.rs:

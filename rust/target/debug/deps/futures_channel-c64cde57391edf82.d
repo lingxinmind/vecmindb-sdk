@@ -1,0 +1,12 @@
+/opt/vecminDB/sdk/rust/target/debug/deps/futures_channel-c64cde57391edf82.d: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lock.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/mod.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/queue.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/sink_impl.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/oneshot.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libfutures_channel-c64cde57391edf82.rlib: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lock.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/mod.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/queue.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/sink_impl.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/oneshot.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libfutures_channel-c64cde57391edf82.rmeta: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lock.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/mod.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/queue.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/sink_impl.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/oneshot.rs
+
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lib.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/lock.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/mod.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/queue.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/mpsc/sink_impl.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/futures-channel-0.3.34/src/oneshot.rs:

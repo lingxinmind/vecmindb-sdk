@@ -1,0 +1,14 @@
+/opt/vecminDB/sdk/rust/target/debug/deps/writeable-1f9648ce7b202c76.d: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/cmp.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/concat.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/impls.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/ops.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/parts_write_adapter.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/replace.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/try_writeable.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libwriteable-1f9648ce7b202c76.rlib: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/cmp.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/concat.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/impls.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/ops.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/parts_write_adapter.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/replace.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/try_writeable.rs
+
+/opt/vecminDB/sdk/rust/target/debug/deps/libwriteable-1f9648ce7b202c76.rmeta: /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/lib.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/cmp.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/concat.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/impls.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/ops.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/parts_write_adapter.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/replace.rs /root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/try_writeable.rs
+
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/lib.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/cmp.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/concat.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/impls.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/ops.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/parts_write_adapter.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/replace.rs:
+/root/.cargo/registry/src/rsproxy.cn-e3de039b2554c837/writeable-0.6.4/src/try_writeable.rs:
