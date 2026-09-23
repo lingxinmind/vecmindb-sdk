@@ -301,6 +301,48 @@ export interface SearchMemoryParams {
   top_k?: number;
 }
 
+/** Parameters for the `store_media` MCP tool. */
+export interface StoreMediaParams {
+  /** Agent-side description; the canonical embedding text. The server runs
+   * zero vision models, so without a caption the media stays `pending`
+   * and is not text-searchable until re-stored with the same `media_id`
+   * and a caption. */
+  caption?: string;
+  /** Base64-encoded blob bytes. */
+  media_data?: string;
+  /** Optional stable id; re-uploading replaces the old description record
+   * (G12 upsert). */
+  media_id?: string;
+  /** image | audio | video | file. @default "image" */
+  kind?: string;
+  /** MIME type for allow-list validation. */
+  mime?: string;
+  /** Path/URL of the original file. */
+  source_ref?: string;
+  /** Explicit strong anchoring (e.g. contract scans). @default false */
+  is_factual?: boolean;
+  /** Optional agent-side CLIP embedding for image-to-image search (M4);
+   * requires `media.clip_collection` server-side. */
+  clip_vector?: number[];
+}
+
+/** Parameters for image-to-image search via the `search_media_by_image`
+ * MCP tool. */
+export interface SearchMediaByImageParams {
+  /** Precomputed CLIP embedding of the query image. */
+  clip_vector?: number[];
+  /** Raw image object handed to `clip_encoder`. */
+  image?: unknown;
+  /** Agent-side callable mapping an image to a CLIP embedding
+   * (`media.clip_dimension` floats). */
+  clip_encoder?: (image: unknown) => number[];
+  /** Number of results. @default 5 */
+  top_k?: number;
+  /** Optional cosine floor (0 returns raw top-k; the text relevance gate
+   * does not apply to CLIP space). @default 0 */
+  min_score?: number;
+}
+
 /** Parameters for the `list_memories` MCP tool. */
 export interface ListMemoriesParams {
   /** Maximum number of memories to return. @default 20 */

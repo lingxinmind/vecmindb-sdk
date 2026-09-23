@@ -13,7 +13,9 @@
 import type {
   MCPClientOptions,
   StoreMemoryParams,
+  StoreMediaParams,
   SearchMemoryParams,
+  SearchMediaByImageParams,
   ListMemoriesParams,
   GetMemoryParams,
   ForgetParams,
@@ -343,6 +345,73 @@ export class VecminMCPClient {
       },
     });
     return result;
+  }
+
+  /**
+   * Call the `store_media` MCP tool.
+   *
+   * The caption is caller-supplied (the agent generates the description
+   * agent-side; the server runs zero vision models). Without a caption the
+   * media stays `pending` and is not text-searchable until re-stored with
+   * the same `media_id` and a caption. `clip_vector` is an optional
+   * agent-side CLIP embedding for image-to-image search (M4); it requires
+   * `media.clip_collection` server-side.
+   *
+   * @example
+   * ```ts
+   * await mcp.storeMedia({ media_data: base64, media_id: "scan-1", caption: "signed contract" });
+   * ```
+   */
+  async storeMedia(params: StoreMediaParams): Promise<void> {
+    const arguments_: Record<string, unknown> = {
+      kind: params.kind ?? "image",
+      is_factual: params.is_factual ?? false,
+    };
+    if (params.caption !== undefined) arguments_["caption"] = params.caption;
+    if (params.media_data !== undefined) arguments_["media_data"] = params.media_data;
+    if (params.media_id !== undefined) arguments_["media_id"] = params.media_id;
+    if (params.mime !== undefined) arguments_["mime"] = params.mime;
+    if (params.source_ref !== undefined) arguments_["source_ref"] = params.source_ref;
+    if (params.clip_vector !== undefined) arguments_["clip_vector"] = params.clip_vector;
+    await this.rpc("tools/call", {
+      name: "store_media",
+      arguments: arguments_,
+    });
+  }
+
+  /**
+   * Image-to-image search via the `search_media_by_image` MCP tool.
+   *
+   * The CLIP embedding is computed agent-side (the server runs zero vision
+   * models): either pass a precomputed `clip_vector` or supply `image`
+   * together with a `clip_encoder` callable. Searches the auxiliary CLIP
+   * space only; requires `media.clip_collection` server-side (M4, disabled
+   * by default).
+   *
+   * @example
+   * ```ts
+   * const hits = await mcp.searchByImage({ clip_vector: [0.1, 0.2, 0.3], top_k: 5 });
+   * ```
+   */
+  async searchByImage(params: SearchMediaByImageParams): Promise<unknown> {
+    let clipVector = params.clip_vector;
+    if (clipVector === undefined) {
+      if (params.image === undefined || params.clip_encoder === undefined) {
+        throw new VecminError(
+          "searchByImage needs either clip_vector or image + clip_encoder",
+          0,
+        );
+      }
+      clipVector = params.clip_encoder(params.image);
+    }
+    return this.rpc("tools/call", {
+      name: "search_media_by_image",
+      arguments: {
+        clip_vector: clipVector,
+        top_k: params.top_k ?? 5,
+        min_score: params.min_score ?? 0,
+      },
+    });
   }
 
   /**
