@@ -41,7 +41,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
+from typing import Any, AsyncIterator, Callable, Dict, Iterator, List, Optional, Sequence, Union
 
 import httpx
 
@@ -389,6 +389,99 @@ class McpClient:
             {"agent_id": agent_id, "query": query, "top_k": top_k},
         )
 
+    async def store_media(
+        self,
+        *,
+        caption: Optional[str] = None,
+        media_data: Optional[str] = None,
+        media_id: Optional[str] = None,
+        kind: str = "image",
+        mime: Optional[str] = None,
+        source_ref: Optional[str] = None,
+        is_factual: bool = False,
+        clip_vector: Optional[Sequence[float]] = None,
+    ) -> Any:
+        """Store a media item via the ``store_media`` MCP tool.
+
+        The caption is caller-supplied (the agent generates the description
+        agent-side; the server runs zero vision models). Without a caption
+        the media stays ``pending`` and is not text-searchable until
+        re-stored with the same ``media_id`` and a caption.
+
+        Args:
+            caption: Agent-side description; the canonical embedding text.
+            media_data: Base64-encoded blob bytes.
+            media_id: Optional stable id; re-uploading replaces the old
+                description record (G12 upsert).
+            kind: image | audio | video | file.
+            mime: MIME type for allow-list validation.
+            source_ref: Path/URL of the original file.
+            is_factual: Explicit strong anchoring (e.g. contract scans).
+            clip_vector: Optional agent-side CLIP embedding for image-to-image
+                search (M4); requires ``media.clip_collection`` server-side.
+
+        Returns:
+            Tool result.
+        """
+        arguments: Dict[str, Any] = {"kind": kind, "is_factual": is_factual}
+        if caption is not None:
+            arguments["caption"] = caption
+        if media_data is not None:
+            arguments["media_data"] = media_data
+        if media_id is not None:
+            arguments["media_id"] = media_id
+        if mime is not None:
+            arguments["mime"] = mime
+        if source_ref is not None:
+            arguments["source_ref"] = source_ref
+        if clip_vector is not None:
+            arguments["clip_vector"] = list(clip_vector)
+        return await self.call_tool("store_media", arguments)
+
+    async def search_by_image(
+        self,
+        *,
+        clip_vector: Optional[Sequence[float]] = None,
+        image: Any = None,
+        clip_encoder: Optional[Callable[[Any], Sequence[float]]] = None,
+        top_k: int = 5,
+        min_score: float = 0.0,
+    ) -> Any:
+        """Image-to-image search via the ``search_media_by_image`` MCP tool.
+
+        The CLIP embedding is computed agent-side (the server runs zero
+        vision models): either pass a precomputed ``clip_vector`` or supply
+        ``image`` together with a ``clip_encoder`` callable that maps the
+        image to a CLIP embedding. Requires ``media.clip_collection`` to be
+        enabled server-side (M4, disabled by default).
+
+        Args:
+            clip_vector: Precomputed CLIP embedding of the query image.
+            image: Raw image object handed to ``clip_encoder``.
+            clip_encoder: Agent-side callable mapping an image to a CLIP
+                embedding (``media.clip_dimension`` floats).
+            top_k: Number of results.
+            min_score: Optional cosine floor (0 returns raw top-k; the text
+                relevance gate does not apply to CLIP space).
+
+        Returns:
+            Tool result with media_id / source_ref / caption per hit.
+        """
+        if clip_vector is None:
+            if image is None or clip_encoder is None:
+                raise ValueError(
+                    "search_by_image needs either clip_vector or image + clip_encoder"
+                )
+            clip_vector = clip_encoder(image)
+        return await self.call_tool(
+            "search_media_by_image",
+            {
+                "clip_vector": list(clip_vector),
+                "top_k": top_k,
+                "min_score": min_score,
+            },
+        )
+
     async def list_memories(self, *, limit: int = 20) -> Any:
         """List the caller's own memories via the ``list_memories`` MCP tool.
 
@@ -635,6 +728,67 @@ class SyncMcpClient:
     def search_memory(self, query: str, *, agent_id: str = "default", top_k: int = 5) -> Any:
         """Search memories via the ``search_memory`` MCP tool."""
         return self.call_tool("search_memory", {"agent_id": agent_id, "query": query, "top_k": top_k})
+
+    def store_media(
+        self,
+        *,
+        caption: Optional[str] = None,
+        media_data: Optional[str] = None,
+        media_id: Optional[str] = None,
+        kind: str = "image",
+        mime: Optional[str] = None,
+        source_ref: Optional[str] = None,
+        is_factual: bool = False,
+        clip_vector: Optional[Sequence[float]] = None,
+    ) -> Any:
+        """Store a media item via the ``store_media`` MCP tool.
+
+        The caption is caller-supplied (agent-side description; the server
+        runs zero vision models). Without a caption the media stays
+        ``pending`` until re-stored with the same ``media_id`` and a caption.
+        ``clip_vector`` is an optional agent-side CLIP embedding for
+        image-to-image search (M4).
+        """
+        arguments: Dict[str, Any] = {"kind": kind, "is_factual": is_factual}
+        if caption is not None:
+            arguments["caption"] = caption
+        if media_data is not None:
+            arguments["media_data"] = media_data
+        if media_id is not None:
+            arguments["media_id"] = media_id
+        if mime is not None:
+            arguments["mime"] = mime
+        if source_ref is not None:
+            arguments["source_ref"] = source_ref
+        if clip_vector is not None:
+            arguments["clip_vector"] = list(clip_vector)
+        return self.call_tool("store_media", arguments)
+
+    def search_by_image(
+        self,
+        *,
+        clip_vector: Optional[Sequence[float]] = None,
+        image: Any = None,
+        clip_encoder: Optional[Callable[[Any], Sequence[float]]] = None,
+        top_k: int = 5,
+        min_score: float = 0.0,
+    ) -> Any:
+        """Image-to-image search via the ``search_media_by_image`` MCP tool.
+
+        The CLIP embedding is computed agent-side: pass a precomputed
+        ``clip_vector`` or supply ``image`` + ``clip_encoder``. Requires
+        ``media.clip_collection`` server-side (M4, disabled by default).
+        """
+        if clip_vector is None:
+            if image is None or clip_encoder is None:
+                raise ValueError(
+                    "search_by_image needs either clip_vector or image + clip_encoder"
+                )
+            clip_vector = clip_encoder(image)
+        return self.call_tool(
+            "search_media_by_image",
+            {"clip_vector": list(clip_vector), "top_k": top_k, "min_score": min_score},
+        )
 
     def list_memories(self, *, limit: int = 20) -> Any:
         """List the caller's own memories via the ``list_memories`` MCP tool."""
