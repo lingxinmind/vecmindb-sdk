@@ -32,6 +32,8 @@
 
 mod agent_memory;
 mod client;
+mod media;
 
 pub use agent_memory::{auto_summary, AfterTurnOptions, AgentMemory};
 pub use client::{ClientError, VecminClient};
+pub use media::StoreMediaArgs;
