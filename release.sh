@@ -3,6 +3,18 @@
 # Ensures multi-language SDK versions align and clean builds are produced.
 set -e
 
+# ── Single-version-source guard (2026-09) ─────────────────────────────────────
+# Versions originate in the MAIN repo (sdk/release.sh). The pre-commit hook
+# and publish.sh sync sdk/{python,typescript,rust} into this repo. Running
+# version alignment HERE would create a conflicting version source that the
+# next sync overwrites — refuse it outright.
+if [ -f "../sdk/release.sh" ]; then
+    echo "❌ This is the vecmindb-sdk SUBMODULE — version alignment must not run here."
+    echo "   Correct flow:  cd <main>/sdk && ./release.sh <version>   (then publish.sh)"
+    echo "   The sync hook propagates versions into this repo automatically."
+    exit 1
+fi
+
 # Check version argument
 if [ -z "$1" ]; then
     echo "❌ Error: Please specify the version to release."
