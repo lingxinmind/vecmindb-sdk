@@ -286,6 +286,9 @@ export interface StoreMemoryParams {
   source?: string;
   /** If true, permanently exempts this memory from LTSM forgetting. */
   is_factual?: boolean;
+  /** If true, strips any anchor so this outdated memory re-enters
+   * normal LTSM decay. */
+  is_obsolete?: boolean;
   /** Optional metadata as a JSON object. */
   metadata?: Record<string, unknown>;
 }
@@ -299,6 +302,15 @@ export interface SearchMemoryParams {
   agent_id: string;
   /** Number of results. @default 5 */
   top_k?: number;
+  /** Epoch seconds: only entries created at or after this time. */
+  since_ts?: number;
+  /** Epoch seconds: only entries created at or before this time. */
+  until_ts?: number;
+  /** Only entries whose metadata.tags contains at least one of these
+   * tags (any-of). */
+  tags?: string[];
+  /** Only entries whose text contains this substring (case-insensitive). */
+  keyword?: string;
 }
 
 /** Parameters for the `store_media` MCP tool. */
@@ -347,6 +359,21 @@ export interface SearchMediaByImageParams {
 export interface ListMemoriesParams {
   /** Maximum number of memories to return. @default 20 */
   limit?: number;
+  /** true = inbox view: only entries other tenants shared with you
+   * (granted collections; own memories and the product pack excluded). */
+  shared_with_me?: boolean;
+  /** Inbox only: window in hours for the "Recent sharing activity"
+   * summary. @default 168 (7 days) */
+  since_hours?: number;
+  /** Epoch seconds: only entries created at or after this time. */
+  since_ts?: number;
+  /** Epoch seconds: only entries created at or before this time. */
+  until_ts?: number;
+  /** Only entries whose metadata.tags contains at least one of these
+   * tags (any-of). */
+  tags?: string[];
+  /** Only entries whose text contains this substring (case-insensitive). */
+  keyword?: string;
 }
 
 /** Parameters for the `get_memory` MCP tool. */
@@ -389,6 +416,136 @@ export interface FactualityTemplateParams {
   text: string;
   /** Concept type: either 'profile' or 'rule'. */
   template_type: string;
+}
+
+/** Parameters for the `update_memory` MCP tool: correct a memory in
+ * place (same id and anchors; the corrected text is re-embedded and the
+ * previous text appended to a bounded history). Author-only. */
+export interface UpdateMemoryParams {
+  /** Memory vector ID to correct (own collection only). */
+  id: string;
+  /** The corrected content — replaces the previous text. */
+  text: string;
+  /** Optional explicit re-grade: true = strong anchor, false = weak;
+   * absent preserves the current anchor. */
+  is_factual?: boolean;
+}
+
+/** Parameters for the `freeze_memory` MCP tool: frozen entries are
+ * exempt from LTSM distillation and staleness scavenging. Advisory on
+ * top of anchoring, reversible any time, author-only. */
+export interface FreezeMemoryParams {
+  /** Memory vector ID (own collection only). */
+  id: string;
+  /** true = exempt from distillation/vacuum, false = back to the
+   * normal lifecycle. */
+  frozen: boolean;
+}
+
+/** Parameters for the `export_memory` MCP tool (author-scoped, own
+ * collection — the lightweight "my data" answer, no admin gate). */
+export interface ExportMemoryParams {
+  /** Output format. @default "json" */
+  format?: "json" | "markdown";
+}
+
+/** One entry of an `import_memories` batch. */
+export interface ImportMemoryEntry {
+  /** The memory text (canonical embedding content). */
+  text: string;
+  /** Explicit strong anchoring (default false = weak). */
+  is_factual?: boolean;
+  /** Optional metadata (e.g. tags, detail, source_ref). */
+  metadata?: Record<string, unknown>;
+}
+
+/** Parameters for the `import_memories` MCP tool: first-run cold-start
+ * batch import, cap 200 entries per call. Every entry goes through the
+ * same ingestion core as `store_memory`, per-entry independent, with an
+ * honest partial-failure report. */
+export interface ImportMemoriesParams {
+  /** Batch of memory entries. */
+  memories: ImportMemoryEntry[];
+}
+
+/** Parameters for the `update_memory_sharing` MCP tool: flips the
+ * cross-tenant sharing flag on the caller's own memories (owner-side
+ * only). Batch exposure (>1 entry, shared=true) is two-phase — the
+ * first call returns a dry-run summary, re-issue with confirm:true. */
+export interface UpdateMemorySharingParams {
+  /** Single memory vector ID (own collection only). */
+  id?: string;
+  /** Batch: explicit list of memory IDs (own collection only). */
+  ids?: string[];
+  /** Batch selector: "all", "tag:<name>", or "query:<text>" (share by
+   * meaning without needing tags). */
+  scope?: string;
+  /** Exclude entries whose metadata.tags contains this tag from the
+   * match set. */
+  except_tag?: string;
+  /** Exclude these entry IDs from the match set. */
+  except_ids?: string[];
+  /** Field-level exposure for shared entries: full (default, WYSIWYG)
+   * or summary (text survives, detail stripped for grantees). */
+  shared_scope?: "full" | "summary";
+  /** true = share with granted tenants, false = private again. */
+  shared: boolean;
+  /** Required true to apply a batch exposure of more than one entry. */
+  confirm?: boolean;
+}
+
+/** Parameters for the `set_tenant_grant` MCP tool (owner-side only):
+ * grant/revoke another tenant read access to your collection. Live
+ * immediately; grantees still only see entries you marked shared. */
+export interface SetTenantGrantParams {
+  /** Grantee tenant id (must already exist in security.tenant_keys). */
+  tenant: string;
+  /** Collections to grant; defaults to your own memory collection. You
+   * may only name collections you own. */
+  collections?: string[];
+  /** true = revoke the grant; false/omit = grant. Idempotent. */
+  revoke?: boolean;
+}
+
+/** Parameters for the `share_with_tenant` MCP tool: guided one-shot
+ * share — grants read access AND semantically selects matching entries,
+ * then returns a dry-run with previews and sensitivity flags; re-issue
+ * with confirm:true to apply. */
+export interface ShareWithTenantParams {
+  /** Grantee tenant id (must already exist in security.tenant_keys). */
+  tenant: string;
+  /** Plain-words description of what to share — matched semantically
+   * against your own entries. */
+  what: string;
+  /** full (default, WYSIWYG) or summary (detail stripped for grantees). */
+  shared_scope?: "full" | "summary";
+  /** Required true to apply (the first call returns a dry-run summary). */
+  confirm?: boolean;
+}
+
+/** Parameters for the `update_share_subscription` MCP tool: standing
+ * share rule — "future entries matching <what> go to <tenant>". Pure
+ * storage, never shares anything by itself; pending matches appear via
+ * `check_share_subscriptions`. */
+export interface UpdateShareSubscriptionParams {
+  /** Plain-words description of the kind of content to share. */
+  what?: string;
+  /** Grantee tenant id for future matches. */
+  tenant?: string;
+  /** Field-level exposure for future applies (default full). */
+  shared_scope?: "full" | "summary";
+  /** true = clear your subscription. */
+  remove?: boolean;
+}
+
+/** Parameters for the `get_memory_rules` MCP tool: the corrected,
+ * scope-guarded memory-protocol rule block with the exact local path to
+ * write it into. */
+export interface GetMemoryRulesParams {
+  /** One of: claude_code | cursor | workbuddy | all. @default "all" */
+  target?: string;
+  /** Rule locale: en (default) | zh. @default "en" */
+  lang?: string;
 }
 
 /** JSON-RPC 2.0 request envelope. */

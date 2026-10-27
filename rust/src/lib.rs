@@ -33,7 +33,12 @@
 mod agent_memory;
 mod client;
 mod media;
+mod memory_tools;
 
 pub use agent_memory::{auto_summary, AfterTurnOptions, AgentMemory};
 pub use client::{ClientError, VecminClient};
 pub use media::StoreMediaArgs;
+pub use memory_tools::{
+    ImportMemoryEntry, ListMemoriesArgs, SearchMemoryArgs, StoreMemoryArgs,
+    UpdateMemorySharingArgs,
+};

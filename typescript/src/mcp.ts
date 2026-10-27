@@ -22,6 +22,15 @@ import type {
   MemoryStatusParams,
   ConsolidateParams,
   FactualityTemplateParams,
+  UpdateMemoryParams,
+  FreezeMemoryParams,
+  ExportMemoryParams,
+  ImportMemoriesParams,
+  UpdateMemorySharingParams,
+  SetTenantGrantParams,
+  ShareWithTenantParams,
+  UpdateShareSubscriptionParams,
+  GetMemoryRulesParams,
   MCPSearchResult,
   JsonRpcRequest,
   JsonRpcResponse,
@@ -322,6 +331,7 @@ export class VecminMCPClient {
         agent_id: params.agent_id,
         text: params.text,
         is_factual: params.is_factual ?? false,
+        ...(params.is_obsolete !== undefined ? { is_obsolete: params.is_obsolete } : {}),
         ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
       },
     });
@@ -330,19 +340,27 @@ export class VecminMCPClient {
   /**
    * Call the `search_memory` MCP tool.
    *
+   * Optional R3-4 structured filters: `since_ts` / `until_ts` (epoch
+   * seconds), `tags` (any-of), `keyword` (substring, case-insensitive).
+   *
    * @example
    * ```ts
    * const results = await mcp.searchMemory({ query: "preferences", agent_id: "agent-1", top_k: 5 });
    * ```
    */
   async searchMemory(params: SearchMemoryParams): Promise<MCPSearchResult[]> {
+    const arguments_: Record<string, unknown> = {
+      agent_id: params.agent_id,
+      query: params.query,
+      top_k: params.top_k ?? 5,
+    };
+    if (params.since_ts !== undefined) arguments_["since_ts"] = params.since_ts;
+    if (params.until_ts !== undefined) arguments_["until_ts"] = params.until_ts;
+    if (params.tags !== undefined) arguments_["tags"] = params.tags;
+    if (params.keyword !== undefined) arguments_["keyword"] = params.keyword;
     const result = await this.rpc<MCPSearchResult[]>("tools/call", {
       name: "search_memory",
-      arguments: {
-        agent_id: params.agent_id,
-        query: params.query,
-        top_k: params.top_k ?? 5,
-      },
+      arguments: arguments_,
     });
     return result;
   }
@@ -416,12 +434,26 @@ export class VecminMCPClient {
 
   /**
    * Call the `list_memories` MCP tool: enumerate the caller's own memories
-   * (id, full text, metadata), newest first.
+   * (id, full text, metadata), newest first. `shared_with_me: true` is the
+   * inbox view — only entries other tenants shared with you.
    */
   async listMemories(params: ListMemoriesParams = {}): Promise<unknown> {
+    const arguments_: Record<string, unknown> = {
+      limit: params.limit ?? 20,
+    };
+    if (params.shared_with_me !== undefined) {
+      arguments_["shared_with_me"] = params.shared_with_me;
+    }
+    if (params.since_hours !== undefined) {
+      arguments_["since_hours"] = params.since_hours;
+    }
+    if (params.since_ts !== undefined) arguments_["since_ts"] = params.since_ts;
+    if (params.until_ts !== undefined) arguments_["until_ts"] = params.until_ts;
+    if (params.tags !== undefined) arguments_["tags"] = params.tags;
+    if (params.keyword !== undefined) arguments_["keyword"] = params.keyword;
     return this.rpc("tools/call", {
       name: "list_memories",
-      arguments: { limit: params.limit ?? 20 },
+      arguments: arguments_,
     });
   }
 
@@ -491,6 +523,194 @@ export class VecminMCPClient {
     return this.rpc("tools/call", {
       name: "remove_factuality_template",
       arguments: { text: params.text },
+    });
+  }
+
+  /**
+   * Call the `update_memory` MCP tool: correct a memory in place — same id
+   * and anchors, the corrected text re-embedded, the previous text appended
+   * to a bounded history. `is_factual` optionally re-grades the anchor
+   * (true = strong, false = weak; absent preserves the current grade).
+   * Author-only.
+   */
+  async updateMemory(params: UpdateMemoryParams): Promise<void> {
+    const arguments_: Record<string, unknown> = {
+      id: params.id,
+      text: params.text,
+    };
+    if (params.is_factual !== undefined) arguments_["is_factual"] = params.is_factual;
+    await this.rpc("tools/call", {
+      name: "update_memory",
+      arguments: arguments_,
+    });
+  }
+
+  /**
+   * Call the `freeze_memory` MCP tool: freeze (or unfreeze) one of your
+   * memories — frozen entries are exempt from LTSM distillation and
+   * staleness scavenging ("do not touch this memory"). Advisory on top of
+   * anchoring, reversible any time, author-only.
+   */
+  async freezeMemory(params: FreezeMemoryParams): Promise<void> {
+    await this.rpc("tools/call", {
+      name: "freeze_memory",
+      arguments: { id: params.id, frozen: params.frozen },
+    });
+  }
+
+  /**
+   * Call the `export_memory` MCP tool: export YOUR memories (author-scoped,
+   * own collection) as a self-contained JSON array or human-readable
+   * Markdown — the lightweight "my data" answer, no admin gate.
+   */
+  async exportMemory(params: ExportMemoryParams = {}): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "export_memory",
+      arguments: { format: params.format ?? "json" },
+    });
+  }
+
+  /**
+   * Call the `import_memories` MCP tool: first-run cold-start batch import
+   * (cap 200 entries per call). Every entry goes through the same ingestion
+   * core as `store_memory`, per-entry independent, with an honest
+   * partial-failure report.
+   */
+  async importMemories(params: ImportMemoriesParams): Promise<void> {
+    await this.rpc("tools/call", {
+      name: "import_memories",
+      arguments: { memories: params.memories },
+    });
+  }
+
+  /**
+   * Call the `update_memory_sharing` MCP tool: flip the cross-tenant
+   * sharing flag on your own memories (owner-side only). Batch exposure
+   * (>1 entry, shared=true) is two-phase — the first call returns a
+   * dry-run summary, re-issue with `confirm: true` to apply.
+   */
+  async updateMemorySharing(params: UpdateMemorySharingParams): Promise<unknown> {
+    const arguments_: Record<string, unknown> = {
+      shared: params.shared,
+    };
+    if (params.id !== undefined) arguments_["id"] = params.id;
+    if (params.ids !== undefined) arguments_["ids"] = params.ids;
+    if (params.scope !== undefined) arguments_["scope"] = params.scope;
+    if (params.except_tag !== undefined) arguments_["except_tag"] = params.except_tag;
+    if (params.except_ids !== undefined) arguments_["except_ids"] = params.except_ids;
+    if (params.shared_scope !== undefined) arguments_["shared_scope"] = params.shared_scope;
+    if (params.confirm !== undefined) arguments_["confirm"] = params.confirm;
+    return this.rpc("tools/call", {
+      name: "update_memory_sharing",
+      arguments: arguments_,
+    });
+  }
+
+  /**
+   * Call the `list_memory_tags` MCP tool: the distinct tags you have used
+   * across your own memories, with per-tag counts and the number of
+   * untagged entries.
+   */
+  async listMemoryTags(): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "list_memory_tags",
+      arguments: {},
+    });
+  }
+
+  /**
+   * Call the `set_tenant_grant` MCP tool (owner-side only): grant (or
+   * revoke) another tenant read access to your collection. Live
+   * immediately; grantees still only see entries you marked shared via
+   * `update_memory_sharing`.
+   */
+  async setTenantGrant(params: SetTenantGrantParams): Promise<void> {
+    const arguments_: Record<string, unknown> = {
+      tenant: params.tenant,
+    };
+    if (params.collections !== undefined) arguments_["collections"] = params.collections;
+    if (params.revoke !== undefined) arguments_["revoke"] = params.revoke;
+    await this.rpc("tools/call", {
+      name: "set_tenant_grant",
+      arguments: arguments_,
+    });
+  }
+
+  /**
+   * Call the `list_tenant_grants` MCP tool (owner-side reverse lookup):
+   * which tenants currently hold read access to your collection.
+   * Read-only; revoke with `set_tenant_grant({ revoke: true })`.
+   */
+  async listTenantGrants(): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "list_tenant_grants",
+      arguments: {},
+    });
+  }
+
+  /**
+   * Call the `share_with_tenant` MCP tool: guided one-shot share in plain
+   * words — grants the tenant read access AND semantically selects matching
+   * entries, then returns a dry-run with per-entry previews and sensitivity
+   * flags; re-issue with `confirm: true` to apply.
+   */
+  async shareWithTenant(params: ShareWithTenantParams): Promise<unknown> {
+    const arguments_: Record<string, unknown> = {
+      tenant: params.tenant,
+      what: params.what,
+    };
+    if (params.shared_scope !== undefined) arguments_["shared_scope"] = params.shared_scope;
+    if (params.confirm !== undefined) arguments_["confirm"] = params.confirm;
+    return this.rpc("tools/call", {
+      name: "share_with_tenant",
+      arguments: arguments_,
+    });
+  }
+
+  /**
+   * Call the `update_share_subscription` MCP tool: standing share rule —
+   * "future entries matching <what> go to <tenant>". Pure storage: never
+   * shares anything by itself; pending matches appear via
+   * `checkShareSubscriptions` and apply only after explicit confirm.
+   * `{ remove: true }` clears the subscription.
+   */
+  async updateShareSubscription(params: UpdateShareSubscriptionParams = {}): Promise<void> {
+    const arguments_: Record<string, unknown> = {};
+    if (params.what !== undefined) arguments_["what"] = params.what;
+    if (params.tenant !== undefined) arguments_["tenant"] = params.tenant;
+    if (params.shared_scope !== undefined) arguments_["shared_scope"] = params.shared_scope;
+    if (params.remove !== undefined) arguments_["remove"] = params.remove;
+    await this.rpc("tools/call", {
+      name: "update_share_subscription",
+      arguments: arguments_,
+    });
+  }
+
+  /**
+   * Call the `check_share_subscriptions` MCP tool: lazy evaluation of your
+   * standing share subscription — lists UNSHARED entries of yours that
+   * currently match, with previews and sensitivity flags, plus the exact
+   * one-step confirm command. Read-only: nothing is shared by checking.
+   */
+  async checkShareSubscriptions(): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "check_share_subscriptions",
+      arguments: {},
+    });
+  }
+
+  /**
+   * Call the `get_memory_rules` MCP tool: the corrected, scope-guarded
+   * memory-protocol rule block for a mainstream agent tool (claude_code |
+   * cursor | workbuddy | all), with the exact local path to write it into.
+   */
+  async getMemoryRules(params: GetMemoryRulesParams = {}): Promise<unknown> {
+    return this.rpc("tools/call", {
+      name: "get_memory_rules",
+      arguments: {
+        target: params.target ?? "all",
+        lang: params.lang ?? "en",
+      },
     });
   }
 

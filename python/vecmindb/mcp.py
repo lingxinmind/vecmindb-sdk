@@ -342,6 +342,8 @@ class McpClient:
         agent_id: str = "default",
         source: Optional[str] = "sdk",
         is_factual: bool = False,
+        is_obsolete: Optional[bool] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """Store a memory via the ``store_memory`` MCP tool.
 
@@ -351,6 +353,9 @@ class McpClient:
                 the authenticated identity bound to the API key).
             source: Optional origin tag, stored in the memory metadata.
             is_factual: If true, exempts this memory from biological forgetting.
+            is_obsolete: If true, strips any anchor so this outdated memory
+                re-enters normal LTSM decay.
+            metadata: Optional metadata JSON object (merged with ``source``).
 
         Returns:
             Tool result.
@@ -360,10 +365,15 @@ class McpClient:
             "text": content,
             "is_factual": is_factual,
         }
+        if is_obsolete is not None:
+            arguments["is_obsolete"] = is_obsolete
+        merged_metadata = dict(metadata or {})
         if source:
             # The server schema has no top-level "source" field; fold it into
             # the documented metadata object instead.
-            arguments["metadata"] = {"source": source}
+            merged_metadata.setdefault("source", source)
+        if merged_metadata:
+            arguments["metadata"] = merged_metadata
         return await self.call_tool("store_memory", arguments)
 
     async def search_memory(
@@ -372,6 +382,10 @@ class McpClient:
         *,
         agent_id: str = "default",
         top_k: int = 5,
+        since_ts: Optional[int] = None,
+        until_ts: Optional[int] = None,
+        tags: Optional[List[str]] = None,
+        keyword: Optional[str] = None,
     ) -> Any:
         """Search memories via the ``search_memory`` MCP tool.
 
@@ -380,14 +394,28 @@ class McpClient:
             agent_id: Agent or session identifier (server overrides this with
                 the authenticated identity bound to the API key).
             top_k: Number of results.
+            since_ts: Epoch seconds — only entries created at or after
+                this time.
+            until_ts: Epoch seconds — only entries created at or before
+                this time.
+            tags: Only entries whose metadata.tags contains at least one
+                of these tags (any-of).
+            keyword: Only entries whose text contains this substring
+                (case-insensitive).
 
         Returns:
             Tool result.
         """
-        return await self.call_tool(
-            "search_memory",
-            {"agent_id": agent_id, "query": query, "top_k": top_k},
-        )
+        arguments: Dict[str, Any] = {"agent_id": agent_id, "query": query, "top_k": top_k}
+        if since_ts is not None:
+            arguments["since_ts"] = since_ts
+        if until_ts is not None:
+            arguments["until_ts"] = until_ts
+        if tags is not None:
+            arguments["tags"] = tags
+        if keyword is not None:
+            arguments["keyword"] = keyword
+        return await self.call_tool("search_memory", arguments)
 
     async def store_media(
         self,
@@ -482,16 +510,52 @@ class McpClient:
             },
         )
 
-    async def list_memories(self, *, limit: int = 20) -> Any:
-        """List the caller's own memories via the ``list_memories`` MCP tool.
+    async def list_memories(
+        self,
+        *,
+        limit: int = 20,
+        shared_with_me: Optional[bool] = None,
+        since_hours: Optional[int] = None,
+        since_ts: Optional[int] = None,
+        until_ts: Optional[int] = None,
+        tags: Optional[List[str]] = None,
+        keyword: Optional[str] = None,
+    ) -> Any:
+        """List memories via the ``list_memories`` MCP tool.
 
         Args:
             limit: Maximum number of memories to return.
+            shared_with_me: If true, inbox view — only entries other
+                tenants shared with you (granted collections, own space
+                excluded).
+            since_hours: Inbox only — window for the "Recent sharing
+                activity" summary (default 168 = 7 days).
+            since_ts: Epoch seconds — only entries created at or after
+                this time.
+            until_ts: Epoch seconds — only entries created at or before
+                this time.
+            tags: Only entries whose metadata.tags contains at least one
+                of these tags (any-of).
+            keyword: Only entries whose text contains this substring
+                (case-insensitive).
 
         Returns:
             Tool result.
         """
-        return await self.call_tool("list_memories", {"limit": limit})
+        arguments: Dict[str, Any] = {"limit": limit}
+        if shared_with_me is not None:
+            arguments["shared_with_me"] = shared_with_me
+        if since_hours is not None:
+            arguments["since_hours"] = since_hours
+        if since_ts is not None:
+            arguments["since_ts"] = since_ts
+        if until_ts is not None:
+            arguments["until_ts"] = until_ts
+        if tags is not None:
+            arguments["tags"] = tags
+        if keyword is not None:
+            arguments["keyword"] = keyword
+        return await self.call_tool("list_memories", arguments)
 
     async def get_memory(self, memory_id: str) -> Any:
         """Fetch one memory by its vector ID via the ``get_memory`` MCP tool.
@@ -592,6 +656,311 @@ class McpClient:
             Tool result.
         """
         return await self.call_tool("remove_factuality_template", {"text": text})
+
+    async def update_memory(
+        self,
+        memory_id: str,
+        text: str,
+        *,
+        is_factual: Optional[bool] = None,
+    ) -> Any:
+        """Correct a memory in place via the ``update_memory`` MCP tool.
+
+        The correction keeps the same id and anchors while the corrected
+        text is re-embedded; the previous text is appended to a bounded
+        history. Corrections of shared entries are audit-trailed (grantees
+        see the new text). Only the authoring agent may correct its own
+        entries.
+
+        Args:
+            memory_id: Memory vector ID to correct (own collection only).
+            text: The corrected content — replaces the previous text.
+            is_factual: Optional explicit re-grade: true = strong anchor,
+                false = weak; absent preserves the current anchor.
+
+        Returns:
+            Tool result.
+        """
+        arguments: Dict[str, Any] = {"id": memory_id, "text": text}
+        if is_factual is not None:
+            arguments["is_factual"] = is_factual
+        return await self.call_tool("update_memory", arguments)
+
+    async def freeze_memory(self, memory_id: str, frozen: bool) -> Any:
+        """Freeze (or unfreeze) one of your memories via the
+        ``freeze_memory`` MCP tool.
+
+        Frozen entries are exempt from LTSM distillation and staleness
+        scavenging — "do not touch this memory". Advisory on top of
+        anchoring (does not re-grade strong/weak), reversible any time,
+        author-only.
+
+        Args:
+            memory_id: Memory vector ID (own collection only).
+            frozen: True = exempt from distillation/vacuum, false = back
+                to the normal lifecycle.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool(
+            "freeze_memory", {"id": memory_id, "frozen": frozen}
+        )
+
+    async def export_memory(self, *, format: str = "json") -> Any:
+        """Export your memories via the ``export_memory`` MCP tool.
+
+        Author-scoped, own collection only: a self-contained JSON array
+        or human-readable Markdown. The lightweight "my data" answer —
+        no admin gate.
+
+        Args:
+            format: Output format — ``"json"`` (default) or ``"markdown"``.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("export_memory", {"format": format})
+
+    async def import_memories(self, memories: Sequence[Dict[str, Any]]) -> Any:
+        """Batch-import memories via the ``import_memories`` MCP tool.
+
+        First-run cold start: every entry goes through the same ingestion
+        core as ``store_memory`` (anchoring, gate, LTSM), with per-entry
+        independence and an honest partial-failure report. Cap: 200
+        entries per call.
+
+        Args:
+            memories: Batch of entries; each dict needs ``text`` and may
+                carry ``is_factual`` (bool) and/or ``metadata`` (object).
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("import_memories", {"memories": list(memories)})
+
+    async def update_memory_sharing(
+        self,
+        *,
+        shared: bool,
+        memory_id: Optional[str] = None,
+        memory_ids: Optional[List[str]] = None,
+        scope: Optional[str] = None,
+        except_tag: Optional[str] = None,
+        except_ids: Optional[List[str]] = None,
+        shared_scope: Optional[str] = None,
+        confirm: Optional[bool] = None,
+    ) -> Any:
+        """Flip the cross-tenant sharing flag via the
+        ``update_memory_sharing`` MCP tool.
+
+        Owner-side only: ``shared=True`` makes entries visible (read-only,
+        full text and detail) to tenants granted your collection;
+        ``shared=False`` makes them private again. Target a single id, an
+        ids array, or a scope selector (``"all"``, ``"tag:<name>"``,
+        ``"query:<text>"``); ``except_tag`` / ``except_ids`` exclude
+        entries from the match set. Batch exposure (>1 entry,
+        shared=true) is two-phase: the first call returns a dry-run
+        summary — re-issue with ``confirm=True`` to apply.
+
+        Args:
+            shared: True = share with granted tenants, false = private.
+            memory_id: Single memory vector ID (own collection only).
+            memory_ids: Batch: explicit list of memory IDs.
+            scope: Batch selector — ``"all"``, ``"tag:<name>"``, or
+                ``"query:<text>"`` (share by meaning without tags).
+            except_tag: Exclude entries whose metadata.tags contains
+                this tag from the match set.
+            except_ids: Exclude these entry IDs from the match set.
+            shared_scope: Field-level exposure — ``"full"`` (default,
+                WYSIWYG) or ``"summary"`` (detail stripped for grantees).
+            confirm: Required true to apply a batch exposure of more
+                than one entry.
+
+        Returns:
+            Tool result (dry-run summary when a batch is not confirmed).
+        """
+        arguments: Dict[str, Any] = {"shared": shared}
+        if memory_id is not None:
+            arguments["id"] = memory_id
+        if memory_ids is not None:
+            arguments["ids"] = memory_ids
+        if scope is not None:
+            arguments["scope"] = scope
+        if except_tag is not None:
+            arguments["except_tag"] = except_tag
+        if except_ids is not None:
+            arguments["except_ids"] = except_ids
+        if shared_scope is not None:
+            arguments["shared_scope"] = shared_scope
+        if confirm is not None:
+            arguments["confirm"] = confirm
+        return await self.call_tool("update_memory_sharing", arguments)
+
+    async def list_memory_tags(self) -> Any:
+        """List your distinct memory tags via the ``list_memory_tags``
+        MCP tool: per-tag counts plus the number of untagged entries
+        (author-only). Useful before sharing by tag.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("list_memory_tags", {})
+
+    async def set_tenant_grant(
+        self,
+        tenant: str,
+        *,
+        collections: Optional[List[str]] = None,
+        revoke: Optional[bool] = None,
+    ) -> Any:
+        """Grant (or revoke) another tenant read access via the
+        ``set_tenant_grant`` MCP tool.
+
+        Owner-side only — you decide unilaterally; the grantee cannot
+        self-provision a grant. Live immediately (no restart). Grantees
+        still only see entries you marked shared via
+        ``update_memory_sharing``.
+
+        Args:
+            tenant: Grantee tenant id (must already exist in
+                security.tenant_keys).
+            collections: Collections to grant; defaults to your own
+                memory collection. You may only name collections you own.
+            revoke: True = revoke the grant; false/omit = grant.
+                Idempotent.
+
+        Returns:
+            Tool result.
+        """
+        arguments: Dict[str, Any] = {"tenant": tenant}
+        if collections is not None:
+            arguments["collections"] = collections
+        if revoke is not None:
+            arguments["revoke"] = revoke
+        return await self.call_tool("set_tenant_grant", arguments)
+
+    async def list_tenant_grants(self) -> Any:
+        """List which tenants currently hold read access to your
+        collection via the ``list_tenant_grants`` MCP tool.
+
+        Owner-side reverse lookup, shared-entry subset only, read-only.
+        Revoke with ``set_tenant_grant(revoke=True)``.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("list_tenant_grants", {})
+
+    async def share_with_tenant(
+        self,
+        tenant: str,
+        what: str,
+        *,
+        shared_scope: Optional[str] = None,
+        confirm: Optional[bool] = None,
+    ) -> Any:
+        """Guided one-shot share via the ``share_with_tenant`` MCP tool.
+
+        Grants the tenant read access AND semantically selects matching
+        entries of yours, then returns a dry-run with per-entry previews
+        and sensitivity flags; re-issue with ``confirm=True`` to apply.
+        Pure composition of ``set_tenant_grant`` +
+        ``update_memory_sharing(scope="query:…")`` — same two-phase
+        confirm. Revoke later with ``set_tenant_grant(revoke=True)``.
+
+        Args:
+            tenant: Grantee tenant id (must already exist in
+                security.tenant_keys).
+            what: Plain-words description of what to share — matched
+                semantically against your own entries.
+            shared_scope: ``"full"`` (default, WYSIWYG) or ``"summary"``
+                (detail stripped for grantees).
+            confirm: Required true to apply (first call returns a
+                dry-run summary).
+
+        Returns:
+            Tool result (dry-run summary when not confirmed).
+        """
+        arguments: Dict[str, Any] = {"tenant": tenant, "what": what}
+        if shared_scope is not None:
+            arguments["shared_scope"] = shared_scope
+        if confirm is not None:
+            arguments["confirm"] = confirm
+        return await self.call_tool("share_with_tenant", arguments)
+
+    async def update_share_subscription(
+        self,
+        *,
+        what: Optional[str] = None,
+        tenant: Optional[str] = None,
+        shared_scope: Optional[str] = None,
+        remove: Optional[bool] = None,
+    ) -> Any:
+        """Manage your standing share rule via the
+        ``update_share_subscription`` MCP tool.
+
+        "Future entries matching <what> go to <tenant>". Pure storage —
+        never shares anything by itself: pending matches appear via
+        ``check_share_subscriptions`` and apply only after your explicit
+        confirm. ``remove=True`` clears the subscription.
+
+        Args:
+            what: Plain-words description of the kind of content to
+                share (semantically matched later).
+            tenant: Grantee tenant id for future matches.
+            shared_scope: Field-level exposure for future applies
+                (default ``"full"``).
+            remove: True = clear your subscription.
+
+        Returns:
+            Tool result.
+        """
+        arguments: Dict[str, Any] = {}
+        if what is not None:
+            arguments["what"] = what
+        if tenant is not None:
+            arguments["tenant"] = tenant
+        if shared_scope is not None:
+            arguments["shared_scope"] = shared_scope
+        if remove is not None:
+            arguments["remove"] = remove
+        return await self.call_tool("update_share_subscription", arguments)
+
+    async def check_share_subscriptions(self) -> Any:
+        """Lazily evaluate your standing share subscription via the
+        ``check_share_subscriptions`` MCP tool.
+
+        Lists UNSHARED entries of yours that currently match, with
+        previews and sensitivity flags, plus the exact one-step confirm
+        command. Read-only — nothing is shared by checking.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool("check_share_subscriptions", {})
+
+    async def get_memory_rules(
+        self, *, target: str = "all", lang: str = "en"
+    ) -> Any:
+        """Fetch the corrected, scope-guarded memory-protocol rule block
+        via the ``get_memory_rules`` MCP tool.
+
+        Returns the block for a mainstream agent tool together with the
+        exact local path to write it into; the calling agent shows the
+        block to the user and writes the file itself.
+
+        Args:
+            target: One of ``claude_code`` | ``cursor`` | ``workbuddy``
+                | ``all`` (default).
+            lang: Rule locale — ``en`` (default) or ``zh``.
+
+        Returns:
+            Tool result.
+        """
+        return await self.call_tool(
+            "get_memory_rules", {"target": target, "lang": lang}
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -718,16 +1087,59 @@ class SyncMcpClient:
         response.raise_for_error()
         return response.result
 
-    def store_memory(self, content: str, *, agent_id: str = "default", source: Optional[str] = "sdk", is_factual: bool = False) -> Any:
-        """Store a memory via the ``store_memory`` MCP tool."""
+    def store_memory(
+        self,
+        content: str,
+        *,
+        agent_id: str = "default",
+        source: Optional[str] = "sdk",
+        is_factual: bool = False,
+        is_obsolete: Optional[bool] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        """Store a memory via the ``store_memory`` MCP tool.
+
+        ``is_obsolete=True`` strips any anchor so the memory re-enters
+        normal LTSM decay; ``metadata`` is merged with the ``source``
+        origin tag.
+        """
         arguments: Dict[str, Any] = {"agent_id": agent_id, "text": content, "is_factual": is_factual}
+        if is_obsolete is not None:
+            arguments["is_obsolete"] = is_obsolete
+        merged_metadata = dict(metadata or {})
         if source:
-            arguments["metadata"] = {"source": source}
+            merged_metadata.setdefault("source", source)
+        if merged_metadata:
+            arguments["metadata"] = merged_metadata
         return self.call_tool("store_memory", arguments)
 
-    def search_memory(self, query: str, *, agent_id: str = "default", top_k: int = 5) -> Any:
-        """Search memories via the ``search_memory`` MCP tool."""
-        return self.call_tool("search_memory", {"agent_id": agent_id, "query": query, "top_k": top_k})
+    def search_memory(
+        self,
+        query: str,
+        *,
+        agent_id: str = "default",
+        top_k: int = 5,
+        since_ts: Optional[int] = None,
+        until_ts: Optional[int] = None,
+        tags: Optional[List[str]] = None,
+        keyword: Optional[str] = None,
+    ) -> Any:
+        """Search memories via the ``search_memory`` MCP tool.
+
+        Optional R3-4 structured filters: ``since_ts`` / ``until_ts``
+        (epoch seconds), ``tags`` (any-of), ``keyword`` (substring,
+        case-insensitive).
+        """
+        arguments: Dict[str, Any] = {"agent_id": agent_id, "query": query, "top_k": top_k}
+        if since_ts is not None:
+            arguments["since_ts"] = since_ts
+        if until_ts is not None:
+            arguments["until_ts"] = until_ts
+        if tags is not None:
+            arguments["tags"] = tags
+        if keyword is not None:
+            arguments["keyword"] = keyword
+        return self.call_tool("search_memory", arguments)
 
     def store_media(
         self,
@@ -790,9 +1202,38 @@ class SyncMcpClient:
             {"clip_vector": list(clip_vector), "top_k": top_k, "min_score": min_score},
         )
 
-    def list_memories(self, *, limit: int = 20) -> Any:
-        """List the caller's own memories via the ``list_memories`` MCP tool."""
-        return self.call_tool("list_memories", {"limit": limit})
+    def list_memories(
+        self,
+        *,
+        limit: int = 20,
+        shared_with_me: Optional[bool] = None,
+        since_hours: Optional[int] = None,
+        since_ts: Optional[int] = None,
+        until_ts: Optional[int] = None,
+        tags: Optional[List[str]] = None,
+        keyword: Optional[str] = None,
+    ) -> Any:
+        """List memories via the ``list_memories`` MCP tool.
+
+        ``shared_with_me=True`` is the inbox view (only entries other
+        tenants shared with you); optional R3-4 structured filters:
+        ``since_ts`` / ``until_ts`` (epoch seconds), ``tags`` (any-of),
+        ``keyword`` (substring, case-insensitive).
+        """
+        arguments: Dict[str, Any] = {"limit": limit}
+        if shared_with_me is not None:
+            arguments["shared_with_me"] = shared_with_me
+        if since_hours is not None:
+            arguments["since_hours"] = since_hours
+        if since_ts is not None:
+            arguments["since_ts"] = since_ts
+        if until_ts is not None:
+            arguments["until_ts"] = until_ts
+        if tags is not None:
+            arguments["tags"] = tags
+        if keyword is not None:
+            arguments["keyword"] = keyword
+        return self.call_tool("list_memories", arguments)
 
     def get_memory(self, memory_id: str) -> Any:
         """Fetch one memory by its vector ID via the ``get_memory`` MCP tool."""
@@ -829,3 +1270,155 @@ class SyncMcpClient:
         """Remove a factuality template via the ``remove_factuality_template``
         MCP tool."""
         return self.call_tool("remove_factuality_template", {"text": text})
+
+    def update_memory(self, memory_id: str, text: str, *, is_factual: Optional[bool] = None) -> Any:
+        """Correct a memory in place via the ``update_memory`` MCP tool.
+
+        Same id and anchors; the corrected text is re-embedded and the
+        previous text appended to a bounded history. ``is_factual``
+        optionally re-grades the anchor; absent preserves the current
+        grade. Author-only.
+        """
+        arguments: Dict[str, Any] = {"id": memory_id, "text": text}
+        if is_factual is not None:
+            arguments["is_factual"] = is_factual
+        return self.call_tool("update_memory", arguments)
+
+    def freeze_memory(self, memory_id: str, frozen: bool) -> Any:
+        """Freeze (or unfreeze) one of your memories via the
+        ``freeze_memory`` MCP tool: frozen entries are exempt from LTSM
+        distillation and staleness scavenging. Author-only, reversible
+        any time."""
+        return self.call_tool("freeze_memory", {"id": memory_id, "frozen": frozen})
+
+    def export_memory(self, *, format: str = "json") -> Any:
+        """Export your memories via the ``export_memory`` MCP tool —
+        author-scoped JSON (default) or Markdown."""
+        return self.call_tool("export_memory", {"format": format})
+
+    def import_memories(self, memories: Sequence[Dict[str, Any]]) -> Any:
+        """Batch-import memories via the ``import_memories`` MCP tool.
+
+        Cold start, cap 200 entries per call; each entry dict needs
+        ``text`` and may carry ``is_factual`` / ``metadata``.
+        """
+        return self.call_tool("import_memories", {"memories": list(memories)})
+
+    def update_memory_sharing(
+        self,
+        *,
+        shared: bool,
+        memory_id: Optional[str] = None,
+        memory_ids: Optional[List[str]] = None,
+        scope: Optional[str] = None,
+        except_tag: Optional[str] = None,
+        except_ids: Optional[List[str]] = None,
+        shared_scope: Optional[str] = None,
+        confirm: Optional[bool] = None,
+    ) -> Any:
+        """Flip the cross-tenant sharing flag via the
+        ``update_memory_sharing`` MCP tool — owner-side only.
+
+        Target a single id, an ids array, or a scope selector
+        (``"all"`` | ``"tag:<name>"`` | ``"query:<text>"``). Batch
+        exposure (>1 entry, shared=true) is two-phase: re-issue with
+        ``confirm=True`` after the dry-run summary.
+        """
+        arguments: Dict[str, Any] = {"shared": shared}
+        if memory_id is not None:
+            arguments["id"] = memory_id
+        if memory_ids is not None:
+            arguments["ids"] = memory_ids
+        if scope is not None:
+            arguments["scope"] = scope
+        if except_tag is not None:
+            arguments["except_tag"] = except_tag
+        if except_ids is not None:
+            arguments["except_ids"] = except_ids
+        if shared_scope is not None:
+            arguments["shared_scope"] = shared_scope
+        if confirm is not None:
+            arguments["confirm"] = confirm
+        return self.call_tool("update_memory_sharing", arguments)
+
+    def list_memory_tags(self) -> Any:
+        """List your distinct memory tags via the ``list_memory_tags``
+        MCP tool: per-tag counts plus the number of untagged entries."""
+        return self.call_tool("list_memory_tags", {})
+
+    def set_tenant_grant(
+        self,
+        tenant: str,
+        *,
+        collections: Optional[List[str]] = None,
+        revoke: Optional[bool] = None,
+    ) -> Any:
+        """Grant (or revoke) another tenant read access via the
+        ``set_tenant_grant`` MCP tool — owner-side only, live
+        immediately. Grantees still only see entries you marked shared."""
+        arguments: Dict[str, Any] = {"tenant": tenant}
+        if collections is not None:
+            arguments["collections"] = collections
+        if revoke is not None:
+            arguments["revoke"] = revoke
+        return self.call_tool("set_tenant_grant", arguments)
+
+    def list_tenant_grants(self) -> Any:
+        """List which tenants currently hold read access to your
+        collection via the ``list_tenant_grants`` MCP tool — owner-side
+        reverse lookup, read-only."""
+        return self.call_tool("list_tenant_grants", {})
+
+    def share_with_tenant(
+        self,
+        tenant: str,
+        what: str,
+        *,
+        shared_scope: Optional[str] = None,
+        confirm: Optional[bool] = None,
+    ) -> Any:
+        """Guided one-shot share via the ``share_with_tenant`` MCP tool:
+        grants read access and semantically selects matching entries,
+        returning a dry-run; re-issue with ``confirm=True`` to apply."""
+        arguments: Dict[str, Any] = {"tenant": tenant, "what": what}
+        if shared_scope is not None:
+            arguments["shared_scope"] = shared_scope
+        if confirm is not None:
+            arguments["confirm"] = confirm
+        return self.call_tool("share_with_tenant", arguments)
+
+    def update_share_subscription(
+        self,
+        *,
+        what: Optional[str] = None,
+        tenant: Optional[str] = None,
+        shared_scope: Optional[str] = None,
+        remove: Optional[bool] = None,
+    ) -> Any:
+        """Manage your standing share rule via the
+        ``update_share_subscription`` MCP tool — pure storage, never
+        shares by itself; pending matches surface via
+        ``check_share_subscriptions``. ``remove=True`` clears it."""
+        arguments: Dict[str, Any] = {}
+        if what is not None:
+            arguments["what"] = what
+        if tenant is not None:
+            arguments["tenant"] = tenant
+        if shared_scope is not None:
+            arguments["shared_scope"] = shared_scope
+        if remove is not None:
+            arguments["remove"] = remove
+        return self.call_tool("update_share_subscription", arguments)
+
+    def check_share_subscriptions(self) -> Any:
+        """Lazily evaluate your standing share subscription via the
+        ``check_share_subscriptions`` MCP tool — read-only, nothing is
+        shared by checking."""
+        return self.call_tool("check_share_subscriptions", {})
+
+    def get_memory_rules(self, *, target: str = "all", lang: str = "en") -> Any:
+        """Fetch the memory-protocol rule block via the
+        ``get_memory_rules`` MCP tool for claude_code | cursor |
+        workbuddy | all (default), with the local path to write it
+        into. ``lang`` is en (default) or zh."""
+        return self.call_tool("get_memory_rules", {"target": target, "lang": lang})
