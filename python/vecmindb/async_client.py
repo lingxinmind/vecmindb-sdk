@@ -504,7 +504,7 @@ class AsyncVecminClient:
         Returns:
             The vector identifier.
         """
-        payload = InsertRequest(id=id, values=vector, metadata=metadata)
+        payload = InsertRequest(id=id or str(uuid.uuid4()), data=vector, metadata=metadata)
         data = await self._api_post(
             f"/collections/{collection}/vectors",
             payload.model_dump(exclude_none=True),
@@ -526,19 +526,33 @@ class AsyncVecminClient:
 
         Args:
             collection: Target collection name.
-            vectors: List of dicts with keys ``values``, ``id``, ``metadata``.
+            vectors: List of dicts with keys ``data`` (or legacy ``values``),
+                ``id``, ``metadata``.
 
         Returns:
             List of inserted vector identifiers.
+
+        Note:
+            The batch endpoint requires consensus (distributed) mode; on a
+            standalone node the server responds with an internal error.
         """
-        items = [InsertRequest(**v) for v in vectors]
-        payload = BatchInsertRequest(vectors=items)
+        operations = [
+            {
+                "type": "add",
+                "id": v.get("id") or str(uuid.uuid4()),
+                "data": v.get("data", v.get("values", v.get("vector"))),
+                "metadata": v.get("metadata"),
+            }
+            for v in vectors
+        ]
         data = await self._api_post(
             f"/collections/{collection}/batch",
-            payload.model_dump(exclude_none=True),
+            {"operations": operations},
             **kw,
         )
         result = data.get("data", data)
+        if isinstance(result, dict):
+            result = result.get("ids", result.get("vectors", []))
         if isinstance(result, list):
             return [r.get("id", str(r)) if isinstance(r, dict) else str(r) for r in result]
         return [str(result)]
@@ -567,7 +581,7 @@ class AsyncVecminClient:
         Returns:
             Search results.
         """
-        payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
+        payload = SearchRequest(query=query, top_k=top_k, ef_search=ef_search, metric=metric, filter=filter)
         data = await self._api_post(
             f"/collections/{collection}/search",
             payload.model_dump(exclude_none=True),
@@ -773,7 +787,7 @@ class AsyncVecminClient:
         Returns:
             Search results.
         """
-        payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
+        payload = SearchRequest(query=query, top_k=top_k, ef_search=ef_search, metric=metric, filter=filter)
         data = await self._api_post("/vectors/search", payload.model_dump(exclude_none=True), **kw)
         raw = data.get("data", data)
         if isinstance(raw, list):

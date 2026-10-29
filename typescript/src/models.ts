@@ -105,7 +105,7 @@ export interface CollectionStats {
 
 /** Parameters for inserting a single vector. */
 export interface InsertParams {
-  /** Unique identifier for the vector. If omitted the server generates one. */
+  /** Unique identifier for the vector. If omitted the client generates a UUID. */
   id?: string;
   /** The vector embedding. */
   vector: number[];
@@ -115,7 +115,7 @@ export interface InsertParams {
 
 /** Parameters for storing raw text (server-side embedding). */
 export interface InsertTextParams {
-  /** Unique identifier for the vector. If omitted the server generates one. */
+  /** Unique identifier for the vector. If omitted the client generates a UUID. */
   id?: string;
   /** Raw text; the server embeds it with the built-in BGE-M3 model. */
   text: string;

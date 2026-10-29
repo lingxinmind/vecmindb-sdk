@@ -16,7 +16,7 @@ const ENDPOINT = process.env.VECMINDB_ENDPOINT ?? "http://localhost:5520";
 const API_KEY = process.env.VECMINDB_API_KEY ?? "";
 
 async function main(): Promise<void> {
-  const client = new VecminClient(ENDPOINT, { apiKey: API_KEY, agentId: "example-agent" });
+  const client = new VecminClient({ baseUrl: ENDPOINT, apiKey: API_KEY, agentId: "example-agent" });
   const space = new VecminMemorySpace(
     client,
     "default",

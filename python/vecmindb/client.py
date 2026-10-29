@@ -385,7 +385,7 @@ class VecminClient:
         Returns:
             The vector identifier.
         """
-        payload = InsertRequest(id=id, values=vector, metadata=metadata)
+        payload = InsertRequest(id=id or str(uuid.uuid4()), data=vector, metadata=metadata)
         data = self._api_post(
             f"/collections/{collection}/vectors",
             payload.model_dump(exclude_none=True),
@@ -403,15 +403,28 @@ class VecminClient:
         vectors: List[Dict[str, Any]],
         **kw,
     ) -> List[str]:
-        """Batch insert vectors into a collection (``POST /api/v1/collections/{name}/batch``)."""
-        items = [InsertRequest(**v) for v in vectors]
-        payload = BatchInsertRequest(vectors=items)
+        """Batch insert vectors into a collection (``POST /api/v1/collections/{name}/batch``).
+
+        Note: the batch endpoint requires consensus (distributed) mode; on a
+        standalone node the server responds with an internal error.
+        """
+        operations = [
+            {
+                "type": "add",
+                "id": v.get("id") or str(uuid.uuid4()),
+                "data": v.get("data", v.get("values", v.get("vector"))),
+                "metadata": v.get("metadata"),
+            }
+            for v in vectors
+        ]
         data = self._api_post(
             f"/collections/{collection}/batch",
-            payload.model_dump(exclude_none=True),
+            {"operations": operations},
             **kw,
         )
         result = data.get("data", data)
+        if isinstance(result, dict):
+            result = result.get("ids", result.get("vectors", []))
         if isinstance(result, list):
             return [r.get("id", str(r)) if isinstance(r, dict) else str(r) for r in result]
         return [str(result)]
@@ -428,7 +441,7 @@ class VecminClient:
         **kw,
     ) -> SearchResponse:
         """Search a collection for nearest neighbours (``POST /api/v1/collections/{name}/search``)."""
-        payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
+        payload = SearchRequest(query=query, top_k=top_k, ef_search=ef_search, metric=metric, filter=filter)
         data = self._api_post(
             f"/collections/{collection}/search",
             payload.model_dump(exclude_none=True),
@@ -566,7 +579,7 @@ class VecminClient:
         **kw,
     ) -> SearchResponse:
         """Global vector search (``POST /api/v1/vectors/search``)."""
-        payload = SearchRequest(query=query, k=top_k, ef_search=ef_search, metric=metric, filter=filter)
+        payload = SearchRequest(query=query, top_k=top_k, ef_search=ef_search, metric=metric, filter=filter)
         data = self._api_post("/vectors/search", payload.model_dump(exclude_none=True), **kw)
         raw = data.get("data", data)
         if isinstance(raw, list):

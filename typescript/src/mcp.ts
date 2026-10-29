@@ -4,7 +4,7 @@
  *
  * Provides:
  * - SSE event-stream connection (`GET /mcp/sse`)
- * - JSON-RPC 2.0 tool invocation (`POST /mcp/messages`)
+ * - JSON-RPC 2.0 tool invocation (`POST /api/v1/mcp/message`)
  *
  * The MCP protocol enables AI agents to store and retrieve memories
  * through a standardised tool interface.
@@ -71,7 +71,7 @@ type EventHandler<T> = (data: T) => void;
  *
  * ### JSON-RPC 2.0
  * Tool invocations (`store_memory`, `search_memory`) are sent as JSON-RPC
- * requests to `POST /mcp/messages`.
+ * requests to `POST /api/v1/mcp/message`.
  *
  * @example
  * ```ts
@@ -102,7 +102,7 @@ export class VecminMCPClient {
 
   constructor(baseUrl: string, options?: MCPClientOptions) {
     this.baseUrl = baseUrl.replace(/\/+$/, "");
-    this.mcpUrl = `${this.baseUrl}/mcp`;
+    this.mcpUrl = `${this.baseUrl}/api/v1/mcp`;
     this.options = options ?? {};
   }
 
@@ -250,7 +250,7 @@ export class VecminMCPClient {
   // -----------------------------------------------------------------------
 
   /**
-   * Send a JSON-RPC 2.0 request to `POST /mcp/messages`.
+   * Send a JSON-RPC 2.0 request to `POST /api/v1/mcp/message`.
    *
    * @returns The `result` field of the JSON-RPC response.
    */
@@ -277,7 +277,7 @@ export class VecminMCPClient {
       this.pendingRpc.set(id, { resolve: resolve as (v: unknown) => void, reject });
     });
 
-    const res = await fetch(`${this.mcpUrl}/messages`, {
+    const res = await fetch(`${this.mcpUrl}/message`, {
       method: "POST",
       headers,
       body: JSON.stringify(request),

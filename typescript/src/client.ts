@@ -68,7 +68,7 @@ export class VecminClient {
   constructor(options: VecminClientOptions) {
     this.baseUrl = options.baseUrl.replace(/\/+$/, "");
     this.apiUrl = `${this.baseUrl}/api/v1`;
-    this.mcpUrl = `${this.baseUrl}/mcp`;
+    this.mcpUrl = `${this.baseUrl}/api/v1/mcp`;
 
     this.auth = new AuthManager(this.baseUrl, options);
     this.timeout = options.timeout ?? 30_000;
@@ -294,7 +294,15 @@ export class VecminClient {
    * ```
    */
   async insert(collection: string, params: InsertParams): Promise<string> {
-    return this.post<string>(`/collections/${encodeURIComponent(collection)}/insert`, params);
+    const inserted = await this.post<{ id?: string } | string>(
+      `/collections/${encodeURIComponent(collection)}/vectors`,
+      {
+        id: params.id ?? crypto.randomUUID(),
+        data: params.vector,
+        metadata: params.metadata,
+      },
+    );
+    return typeof inserted === "string" ? inserted : (inserted.id ?? "");
   }
 
   /**
@@ -312,11 +320,22 @@ export class VecminClient {
    * ```
    */
   async insertText(collection: string, params: InsertTextParams): Promise<string> {
-    return this.post<string>(`/collections/${encodeURIComponent(collection)}/insert`, params);
+    const inserted = await this.post<{ id?: string } | string>(
+      `/collections/${encodeURIComponent(collection)}/vectors`,
+      {
+        id: params.id ?? crypto.randomUUID(),
+        text: params.text,
+        metadata: params.metadata,
+      },
+    );
+    return typeof inserted === "string" ? inserted : (inserted.id ?? "");
   }
 
   /**
    * Insert multiple vectors in a single request.
+   *
+   * Note: the batch endpoint requires consensus (distributed) mode; on a
+   * standalone node the server responds with an internal error.
    *
    * @returns An array of vector IDs in the same order as the input.
    *
@@ -329,7 +348,20 @@ export class VecminClient {
    * ```
    */
   async batchInsert(collection: string, vectors: InsertParams[]): Promise<string[]> {
-    return this.post<string[]>(`/collections/${encodeURIComponent(collection)}/batch`, vectors);
+    const inserted = await this.post<unknown>(`/collections/${encodeURIComponent(collection)}/batch`, {
+      operations: vectors.map((v) => ({
+        type: "add",
+        id: v.id ?? crypto.randomUUID(),
+        data: v.vector,
+        metadata: v.metadata,
+      })),
+    });
+    const list = Array.isArray(inserted)
+      ? inserted
+      : ((inserted as { ids?: unknown[] } | null)?.ids ?? []);
+    return Array.isArray(list)
+      ? list.map((r) => (typeof r === "string" ? r : String((r as { id?: string })?.id ?? r)))
+      : [];
   }
 
   /**
@@ -348,7 +380,13 @@ export class VecminClient {
    * ```
    */
   async search(collection: string, params: SearchParams): Promise<SearchResult[]> {
-    return this.post<SearchResult[]>(`/collections/${encodeURIComponent(collection)}/search`, params);
+    return this.post<SearchResult[]>(`/collections/${encodeURIComponent(collection)}/search`, {
+      query: params.query,
+      top_k: params.k,
+      ef_search: params.ef_search,
+      metric: params.metric,
+      filter: params.filter,
+    });
   }
 
   /**
@@ -524,7 +562,7 @@ export class VecminClient {
     const controller = this.createController();
     try {
       const raw = await fetchJson<unknown>(
-        `${this.mcpUrl}/messages`,
+        `${this.mcpUrl}/message`,
         {
           method: "POST",
           headers: await this.buildHeaders(),
@@ -573,7 +611,7 @@ export class VecminClient {
     const controller = this.createController();
     try {
       const result = await fetchJson<MCPSearchResult[]>(
-        `${this.mcpUrl}/messages`,
+        `${this.mcpUrl}/message`,
         {
           method: "POST",
           headers: await this.buildHeaders(),
@@ -612,7 +650,7 @@ export class VecminClient {
     const controller = this.createController();
     try {
       return await fetchJson<string>(
-        `${this.mcpUrl}/messages`,
+        `${this.mcpUrl}/message`,
         {
           method: "POST",
           headers: await this.buildHeaders(),
@@ -646,7 +684,7 @@ export class VecminClient {
     const controller = this.createController();
     try {
       return await fetchJson<string>(
-        `${this.mcpUrl}/messages`,
+        `${this.mcpUrl}/message`,
         {
           method: "POST",
           headers: await this.buildHeaders(),
@@ -680,7 +718,7 @@ export class VecminClient {
     const controller = this.createController();
     try {
       return await fetchJson<string>(
-        `${this.mcpUrl}/messages`,
+        `${this.mcpUrl}/message`,
         {
           method: "POST",
           headers: await this.buildHeaders(),

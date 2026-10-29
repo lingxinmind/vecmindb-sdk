@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # ===========================================================================
@@ -106,15 +106,27 @@ class CollectionStats(BaseModel):
 class InsertRequest(BaseModel):
     """Payload for inserting a single vector into a collection.
 
+    Server wire format reads ``id`` (required), ``data`` (pre-computed vector)
+    or ``text`` (auto-embedding).  The legacy ``values`` key is still accepted
+    and mapped to ``data`` for backwards compatibility.
+
     Attributes:
-        id: Optional client-assigned vector identifier.
-        values: The embedding vector.
+        id: Client-assigned vector identifier (UUID-generated when omitted).
+        data: The embedding vector.
         metadata: Arbitrary key-value metadata.
     """
 
     id: Optional[str] = None
-    values: List[float]
+    data: List[float]
     metadata: Optional[Dict[str, Any]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_values(cls, values_obj: Any) -> Any:
+        """Back-compat: accept the retired ``values`` key as ``data``."""
+        if isinstance(values_obj, dict) and "values" in values_obj and "data" not in values_obj:
+            values_obj = {**values_obj, "data": values_obj.pop("values")}
+        return values_obj
 
 
 class BatchInsertRequest(BaseModel):
@@ -130,19 +142,30 @@ class BatchInsertRequest(BaseModel):
 class SearchRequest(BaseModel):
     """Payload for vector similarity search.
 
+    The server reads ``top_k`` for the result count; the legacy ``k`` key is
+    still accepted and mapped to ``top_k`` for backwards compatibility.
+
     Attributes:
         query: The query embedding vector.
-        k: Number of nearest neighbours to return.
+        top_k: Number of nearest neighbours to return.
         ef_search: HNSW search-width parameter.
         metric: Override the default distance metric.
         filter: Optional metadata filter expression.
     """
 
     query: List[float]
-    k: int = 10
+    top_k: int = 10
     ef_search: int = 50
     metric: Optional[str] = None
     filter: Optional[Dict[str, Any]] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_legacy_k(cls, values_obj: Any) -> Any:
+        """Back-compat: accept the retired ``k`` key as ``top_k``."""
+        if isinstance(values_obj, dict) and "k" in values_obj and "top_k" not in values_obj:
+            values_obj = {**values_obj, "top_k": values_obj.pop("k")}
+        return values_obj
 
 
 class SearchHit(BaseModel):

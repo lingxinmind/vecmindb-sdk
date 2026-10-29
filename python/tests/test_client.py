@@ -42,12 +42,13 @@ class TestModels(unittest.TestCase):
 
     def test_search_request(self):
         req = SearchRequest(query=[0.1, 0.2, 0.3], k=5, ef_search=100)
-        self.assertEqual(req.k, 5)
+        self.assertEqual(req.top_k, 5)
         self.assertEqual(len(req.query), 3)
 
     def test_insert_request(self):
         req = InsertRequest(values=[0.1, 0.2], id="vec-1", metadata={"key": "val"})
         self.assertEqual(req.id, "vec-1")
+        self.assertEqual(req.data, [0.1, 0.2])
         self.assertEqual(req.metadata["key"], "val")
 
     def test_search_response(self):

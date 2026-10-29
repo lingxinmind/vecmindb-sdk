@@ -847,13 +847,13 @@ GET /index/{collection_name}
 ### Rebuild Index
 
 ```
-POST /index/{collection_name}/rebuild
+POST /api/v1/index/{collection_name}/rebuild
 ```
 
 ### Optimize Index
 
 ```
-POST /index/{collection_name}/optimize
+POST /api/v1/index/{collection_name}/optimize
 ```
 
 ### Get Shadow Trajectory
@@ -1832,7 +1832,7 @@ All error responses follow this structure:
 | 201 | Created | Resource created successfully |
 | 400 | Bad Request | Invalid JSON, missing required fields, dimension mismatch |
 | 401 | Unauthorized | Missing or invalid `x-api-key` header |
-| 402 | Payment Required | License expired — upgrade at vecmindb.com/pricing |
+| 402 | Payment Required | License expired — upgrade at lingxinmind.com/pricing.html |
 | 404 | Not Found | Collection or vector ID does not exist |
 | 409 | Conflict | Collection name or vector ID already exists |
 | 429 | Too Many Requests | Resource quota exceeded — retry after backoff |
@@ -1850,7 +1850,7 @@ All error responses follow this structure:
 | Invalid index type | 400 | `Unsupported index type: '{type}'` |
 | Missing API key | 401 | `API key required` |
 | Invalid API key | 401 | `Invalid API key` |
-| License expired | 402 | `License expired. Please upgrade at https://vecmindb.com/pricing` |
+| License expired | 402 | `License expired. Please upgrade at https://lingxinmind.com/pricing.html` |
 | Quota exceeded | 429 | `Resource quota exceeded: {resource} tokens exhausted` |
 | Server overloaded | 503 | `Service temporarily unavailable` |
 
