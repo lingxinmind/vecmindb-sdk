@@ -96,6 +96,28 @@ class TestExceptions(unittest.TestCase):
         self.assertIsInstance(exception_from_status(500), ServerError)
         self.assertIsInstance(exception_from_status(503), ServerError)
 
+    def test_exception_from_status_empty_message_fallback(self):
+        """Empty/None server messages must never surface as '[401] None'."""
+        from vecmindb.exceptions import (
+            AuthenticationError,
+            ServerError,
+            exception_from_status,
+        )
+
+        for bad_message in (None, "", "   "):
+            exc = exception_from_status(401, message=bad_message)
+            self.assertIsInstance(exc, AuthenticationError)
+            self.assertNotIn("None", str(exc))
+            self.assertIn("Unauthorized", str(exc))
+
+        exc = exception_from_status(500, message=None)
+        self.assertIsInstance(exc, ServerError)
+        self.assertIn("no message from server", str(exc))
+
+        # A real server-provided message must be preserved as-is.
+        exc = exception_from_status(401, message="tenant key revoked")
+        self.assertEqual(str(exc), "[401] tenant key revoked")
+
     def test_exception_str(self):
         exc = VecminError("test error", code=400)
         self.assertEqual(str(exc), "[400] test error")

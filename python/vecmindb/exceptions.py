@@ -117,9 +117,25 @@ _STATUS_CODE_TO_EXCEPTION = {
     429: RateLimitError,
 }
 
+# Shown when the server response body carries no usable ``message`` field
+# (e.g. a bare 401 with ``{"code": 401, "message": null}``).
+_DEFAULT_STATUS_MESSAGES = {
+    400: "Bad request (invalid payload)",
+    401: "Unauthorized (missing or invalid API key)",
+    402: "Payment required (license expired or quota exceeded)",
+    403: "Forbidden (insufficient permissions)",
+    404: "Not found (check collection/tenant/ID)",
+    409: "Conflict (resource already exists or state mismatch)",
+    422: "Validation failed",
+    429: "Rate limited (too many requests)",
+}
+
 
 def exception_from_status(status_code: int, message: str = "", code: Optional[int] = None) -> VecminError:
     """Create the appropriate exception from an HTTP status code.
+
+    Empty/None ``message`` values (server bodies without a ``message`` field)
+    are replaced with a per-status default so callers never see ``[401] None``.
 
     Args:
         status_code: HTTP status code returned by the server.
@@ -129,6 +145,11 @@ def exception_from_status(status_code: int, message: str = "", code: Optional[in
     Returns:
         A subclass of :class:`VecminError` matching the status code.
     """
+    message = (message or "").strip()
+    if not message:
+        message = _DEFAULT_STATUS_MESSAGES.get(
+            status_code, f"HTTP {status_code} (no message from server)"
+        )
     if 500 <= status_code < 600:
         return ServerError(message=message, code=code or status_code)
     exc_cls = _STATUS_CODE_TO_EXCEPTION.get(status_code, VecminError)
