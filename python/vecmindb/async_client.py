@@ -23,7 +23,9 @@ import httpx
 from .auth import AuthManager
 from .exceptions import (
     AuthenticationError,
+    ConflictError,
     ConnectionError,
+    NotFoundError,
     TimeoutError,
     VecminError,
     exception_from_status,
@@ -1273,6 +1275,8 @@ class AsyncVecminClient:
                     f"requested {dimension}, but existing collection has {info.dimension}."
                 )
             return True
+        except NotFoundError:
+            pass  # collection missing -> create it below (get-or-create contract)
         except VecminError:
             raise
         except Exception:

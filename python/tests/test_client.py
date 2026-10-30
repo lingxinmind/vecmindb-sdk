@@ -6,6 +6,7 @@ They can also be run in offline/mock mode to verify the SDK structure.
 
 import unittest
 import os
+from unittest.mock import MagicMock
 from vecmindb import VecminClient, AsyncVecminClient, VecminError
 from vecmindb.models import (
     CreateCollectionRequest,
@@ -124,6 +125,42 @@ class TestExceptions(unittest.TestCase):
 
         exc2 = VecminError("plain error")
         self.assertEqual(str(exc2), "plain error")
+
+
+class TestEnsureCollection(unittest.TestCase):
+    """Verify the get-or-create contract of ensure_collection (mocked transport)."""
+
+    def _make_client(self) -> VecminClient:
+        return VecminClient(base_url="http://localhost:5520", api_key="test-key")
+
+    def test_missing_collection_is_created(self):
+        """404 on get_collection must fall through to create_collection."""
+        from vecmindb.exceptions import NotFoundError
+
+        client = self._make_client()
+        client._api_get = MagicMock(side_effect=NotFoundError("not found", code=404))
+        client._api_post = MagicMock(return_value={"code": 201})
+        self.assertTrue(client.ensure_collection("new_col", dimension=1024))
+        client._api_post.assert_called_once()
+
+    def test_creation_race_returns_true(self):
+        """409 Conflict on create means another caller won the race - it exists."""
+        from vecmindb.exceptions import ConflictError, NotFoundError
+
+        client = self._make_client()
+        client._api_get = MagicMock(side_effect=NotFoundError("not found", code=404))
+        client._api_post = MagicMock(side_effect=ConflictError("already exists", code=409))
+        self.assertTrue(client.ensure_collection("raced", dimension=1024))
+
+    def test_other_create_errors_return_false(self):
+        """Non-conflict creation failures must degrade to False, not raise."""
+        from vecmindb.exceptions import ConnectionError as SdkConnectionError
+        from vecmindb.exceptions import NotFoundError
+
+        client = self._make_client()
+        client._api_get = MagicMock(side_effect=NotFoundError("not found", code=404))
+        client._api_post = MagicMock(side_effect=SdkConnectionError("down", code=0))
+        self.assertFalse(client.ensure_collection("broken", dimension=1024))
 
 
 class TestRetryConfig(unittest.TestCase):
