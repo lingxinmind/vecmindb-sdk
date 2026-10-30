@@ -231,7 +231,11 @@ export interface ClusterStatus {
 
 /** Options for MCP operations. */
 export interface MCPOptions {
-  /** Collection to store/search memories in. @default "agent_memory_mcp" */
+  /**
+   * Collection to store memories in. Omit (recommended) to write to the
+   * authenticated tenant collection - the server rejects free-form
+   * collection names with FORBIDDEN.
+   */
   collection?: string;
   /** Source tag for the memory. */
   source?: string;

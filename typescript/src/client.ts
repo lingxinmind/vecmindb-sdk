@@ -577,7 +577,9 @@ export class VecminClient {
                 text,
                 is_factual: options?.isFactual ?? false,
                 source: options?.source ?? "typescript-sdk",
-                collection: options?.collection ?? "agent_memory_mcp",
+                // Omit by default: the server binds writes to the authenticated
+                // tenant collection and rejects free-form collection names.
+                ...(options?.collection ? { collection: options.collection } : {}),
               },
             },
           }),
