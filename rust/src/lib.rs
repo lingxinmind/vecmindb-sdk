@@ -26,8 +26,9 @@
 //!   neighbors, so clients carry zero threshold logic.
 //! - Memory never breaks the agent: network failures degrade to empty
 //!   context / `Ok(None)` stores instead of panicking.
-//! - `after_turn` auto-summarizes (question + first 200 chars of the
-//!   reply) unless a `summary` is supplied; `summary: None` means
+//! - `after_turn` passes the full reply through (the server-side signpost
+//!   guard handles extraction & detail layering for over-long texts)
+//!   unless a `summary` is supplied; `summary: None` means
 //!   auto, `Some("")` skips the store.
 
 mod agent_memory;

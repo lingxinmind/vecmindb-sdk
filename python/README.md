@@ -97,6 +97,34 @@ agent = Agent(
 )
 ```
 
+## Signpost Summary with a Host LLM (Recommended)
+
+The memory `text` stored via `store_memory` / `agent_turns` is a
+**signpost for the search engine** — its reader is the embedding model,
+not humans. Host-LLM summaries make much better signposts than mechanical
+truncation. Prompt template:
+
+```text
+Store this conversation turn as a memory. Write the memory `text`:
+- 1–3 sentences, in the conversation language
+- Core facts / conclusions / decisions / constraints only —
+  no greetings, no process narration, no restating the question
+- Include the words a future search would use (names, product terms)
+- Keep it under ~300 characters; long text dilutes the semantic anchor
+- Put full evidence, parameters, and source excerpts into `detail`
+Return JSON: {"text": "...", "detail": "..."}
+```
+
+Pass through `agent_turns` / `after_turn`:
+
+```python
+mem.after_turn(question, reply, summary=signpost_text, is_factual=True)
+```
+
+Rules of thumb: every word in `text` must carry locating information
+(drop filler); key numbers/names/parameters belong in `detail`, not in
+`text` (they dilute the anchor under mean pooling).
+
 ## Why VecminDB?
 
 Unlike generic vector databases that act as static drives, VecminDB acts as a cognitive memory operating system with native lifecycle management and cryptographic isolation:

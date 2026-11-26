@@ -19,11 +19,12 @@ REPORT_WITH_HITS = (
 
 
 class TestAutoSummary(unittest.TestCase):
-    def test_truncates_reply_to_cap(self) -> None:
+    def test_full_reply_passes_through(self) -> None:
         long_reply = "很长的回答" * 100  # 500 chars
         s = auto_summary("问题?", long_reply)
         self.assertTrue(s.startswith("Q: 问题?\nA: "))
-        self.assertLessEqual(len(s.split("A: ", 1)[1]), 203)  # 200 + "..."
+        # No truncation — signpost quality is the server-side guard's job.
+        self.assertEqual(len(s.split("A: ", 1)[1]), len(long_reply))
 
     def test_empty_reply_is_safe(self) -> None:
         self.assertEqual(auto_summary("q", ""), "Q: q\nA: ")

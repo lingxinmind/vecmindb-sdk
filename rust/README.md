@@ -26,13 +26,45 @@ let _memory_id = mem.after_turn("customer requirements", &reply, None)?;
   string for unrelated queries (the server-side relevance gate
   `memory.search_min_score`, default 0.70, filters before the client
   ever sees results).
-- `after_turn` stores "question + first 200 chars of the reply" by
-  default; pass `Some(AfterTurnOptions { summary: Some("...".into()), ..Default::default() })`
+- `after_turn` stores "question + the full reply" by default (the
+  server-side signpost guard handles extraction & detail layering for
+  over-long texts); pass `Some(AfterTurnOptions { summary: Some("...".into()), ..Default::default() })`
   to override, `AfterTurnOptions::skip()` to skip, `is_factual: true`
   for durable constraints.
 - Memory never breaks the agent: on any network failure both calls
   degrade to no-ops (empty context / `Ok(None)`) with a stderr warning.
 - Runnable example: `cargo run --example agent_memory`.
+
+## Signpost summary with a host LLM (recommended)
+
+The stored `text` is a **signpost for the search engine** — its reader is
+the embedding model, not humans. The SDK's mechanical fallback works, but
+a host-LLM summary makes a much better signpost. Prompt template:
+
+```text
+Store this conversation turn as a memory. Write the memory `text`:
+- 1–3 sentences, in the conversation language
+- Core facts / conclusions / decisions / constraints only —
+  no greetings, no process narration, no restating the question
+- Include the words a future search would use (names, product terms)
+- Keep it under ~300 characters; long text dilutes the semantic anchor
+- Put full evidence, parameters, and source excerpts into `detail`
+Return JSON: {"text": "...", "detail": "..."}
+```
+
+Pass both fields through `AfterTurnOptions`:
+
+```rust
+mem.after_turn(question, &reply, Some(AfterTurnOptions {
+    summary: Some(signpost_text),
+    is_factual: true,
+    ..Default::default()
+}))?;
+```
+
+Rules of thumb: every word in `text` must carry locating information
+(drop filler); key numbers/names/parameters belong in `detail`, not in
+`text` (they dilute the anchor under mean pooling).
 
 ## Mainstream tools
 

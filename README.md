@@ -97,7 +97,7 @@ def respond(user_message: str) -> str:
 - `before_turn` returns a ready-to-inject context block, or an empty
   string for unrelated queries (the server-side relevance gate
   `memory.search_min_score` filters before the client ever sees results).
-- `after_turn` stores "question + first 200 chars of the reply" by
+- `after_turn` stores "question + the full reply" by
   default; pass `summary="..."` to override, `summary=None` to skip,
   `is_factual=True` for durable constraints.
 - Memory never breaks the agent: on any network failure both calls
@@ -278,6 +278,20 @@ agent = Agent(
     memory_config={"storage": memory_storage} # Inject VecminDB memory
 )
 ```
+
+## Agent Memory: Signpost Summaries (Recommended Practice)
+
+The memory `text` stored via `store_memory` / the SDK `after_turn` loop is
+a **signpost for the search engine** — its reader is the embedding model,
+not humans. Host-LLM-generated summaries make much better signposts than
+mechanical truncation. Per-language prompt templates and pass-through
+examples: see `rust/README.md`, `typescript/README.md`, and the
+`python/` package docs ("Signpost summary with a host LLM").
+
+Rules of thumb: 1–3 sentences of core facts/conclusions/decisions; keep
+it under ~300 characters; every word must carry locating information;
+key numbers/names/parameters go into `metadata.detail` (the evidence
+field — stored verbatim, never embedded).
 
 ## Why VecminDB?
 

@@ -6,8 +6,9 @@ use serde_json::json;
 
 use crate::client::{ClientError, VecminClient};
 
-/// Characters kept from the reply tail in an auto-generated summary.
-const SUMMARY_CHAR_CAP: usize = 200;
+/// [SUMMARY QUALITY L2] No client-side truncation: the full reply is
+/// passed through to the server, whose signpost guard is the single
+/// authority for extraction and detail layering of over-long texts.
 
 /// Options for [`AgentMemory::after_turn`].
 #[derive(Debug, Default, Clone)]
@@ -28,14 +29,14 @@ impl AfterTurnOptions {
     }
 }
 
-/// Builds the default stored summary: question + capped reply tail.
+/// Builds the stored memory text: question + the **full reply**
+/// (pass-through, no truncation). Signpost quality is the server-side
+/// guard's single authority: over-long texts are rewritten extractively
+/// and the full original is layered into `metadata.detail` there. For the
+/// best signposts, pass a host-LLM summary via `AfterTurnOptions.summary`
+/// (see README "Signpost summary with a host LLM").
 pub fn auto_summary(question: &str, reply: &str) -> String {
-    let tail = reply.trim();
-    if tail.chars().count() > SUMMARY_CHAR_CAP {
-        let truncated: String = tail.chars().take(SUMMARY_CHAR_CAP).collect();
-        return format!("Q: {}\nA: {}...", question.trim(), truncated.trim_end());
-    }
-    format!("Q: {}\nA: {}", question.trim(), tail)
+    format!("Q: {}\nA: {}", question.trim(), reply.trim())
 }
 
 fn extract_context(report: &str) -> String {
@@ -148,11 +149,11 @@ mod tests {
 2. [Score: 0.7031] ID: def456\n   Text: audit logs kept 180 days\n";
 
     #[test]
-    fn auto_summary_truncates_reply_tail() {
+    fn auto_summary_passes_full_reply_through() {
         let s = auto_summary("question?", &"x".repeat(500));
         assert!(s.starts_with("Q: question?\nA: "));
         let tail = s.split("A: ").nth(1).unwrap();
-        assert!(tail.chars().count() <= SUMMARY_CHAR_CAP + 3); // + "..."
+        assert_eq!(tail.chars().count(), 500); // no truncation — server-side guard's job
     }
 
     #[test]

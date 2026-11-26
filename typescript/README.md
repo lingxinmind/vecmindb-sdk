@@ -222,12 +222,40 @@ function respond(userMessage: string) {
   string for unrelated queries (the server-side relevance gate
   `memory.search_min_score`, default 0.70, filters before the client
   ever sees results).
-- `afterTurn` stores "question + first 200 chars of the reply" by
-  default; pass `{ summary: "..." }` to override, `{ summary: null }` to
+- `afterTurn` stores "question + the full reply" by default (the
+  server-side signpost guard handles extraction & detail layering for
+  over-long texts); pass `{ summary: "..." }` to override, `{ summary: null }` to
   skip, `{ isFactual: true }` for durable constraints.
 - Memory never breaks the agent: on any network failure both calls
   degrade to no-ops with a warning.
 - Runnable example: `examples/agent-memory-loop.ts`.
+
+### Signpost summary with a host LLM (recommended)
+
+The stored `text` is a **signpost for the search engine** — its reader is
+the embedding model, not humans. The SDK's mechanical fallback works, but
+a host-LLM summary makes a much better signpost. Prompt template:
+
+```text
+Store this conversation turn as a memory. Write the memory `text`:
+- 1–3 sentences, in the conversation language
+- Core facts / conclusions / decisions / constraints only —
+  no greetings, no process narration, no restating the question
+- Include the words a future search would use (names, product terms)
+- Keep it under ~300 characters; long text dilutes the semantic anchor
+- Put full evidence, parameters, and source excerpts into `detail`
+Return JSON: {"text": "...", "detail": "..."}
+```
+
+Pass both fields through `afterTurn` options:
+
+```typescript
+await mem.afterTurn(userMessage, reply, { summary: signpostText, isFactual: true });
+```
+
+Rules of thumb: every word in `text` must carry locating information
+(drop filler); key numbers/names/parameters belong in `detail`, not in
+`text` (they dilute the anchor under mean pooling).
 
 ### Low-level MCP Client (SSE + JSON-RPC)
 

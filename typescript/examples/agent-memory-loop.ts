@@ -46,6 +46,20 @@ async function main(): Promise<void> {
     const memoryId = await mem.afterTurn(question, reply);
     console.log(`stored: ${memoryId ?? "(skipped/failed)"}\n`);
   }
+
+  // Recommended: pass a host-LLM signpost summary instead of the
+  // mechanical fallback. The stored `text` is read by the embedding
+  // model, not humans — 1–3 sentences of facts, every word a future
+  // search would use; evidence goes into metadata.detail (see
+  // README "Signpost summary with a host LLM").
+  const signpost =
+    "客户 ACME 部署方案：选 B 版（自建集群），预算 80 万，决策人张三";
+  const memoryId = await mem.afterTurn(
+    "客户 ACME 部署方案定了吗?",
+    fakeLlm("客户 ACME 部署方案定了吗?", "(meeting transcript)"),
+    { summary: signpost, isFactual: true }
+  );
+  console.log(`signpost stored: ${memoryId ?? "(skipped/failed)"}`);
 }
 
 main().catch((err) => {

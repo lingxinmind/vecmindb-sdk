@@ -39,6 +39,20 @@ def main() -> None:
         memory_id = mem.after_turn(question, reply)
         print(f"stored: {memory_id or '(skipped/failed)'}\n")
 
+    # Recommended: pass a host-LLM signpost summary instead of the
+    # mechanical fallback. The stored `text` is read by the embedding
+    # model, not humans — 1–3 sentences of facts, every word a future
+    # search would use; evidence goes into metadata.detail (see the
+    # package README "Signpost summary with a host LLM").
+    signpost = "客户 ACME 部署方案：选 B 版（自建集群），预算 80 万，决策人张三"
+    memory_id = mem.after_turn(
+        "客户 ACME 部署方案定了吗?",
+        fake_llm("客户 ACME 部署方案定了吗?", "(meeting transcript)"),
+        summary=signpost,
+        is_factual=True,
+    )
+    print(f"signpost stored: {memory_id or '(skipped/failed)'}")
+
 
 if __name__ == "__main__":
     main()

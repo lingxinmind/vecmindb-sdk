@@ -37,5 +37,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let memory_id = mem.after_turn(question, &reply, None)?;
         println!("stored: {}\n", memory_id.unwrap_or_else(|| "(skipped/failed)".into()));
     }
+
+    // Recommended: pass a host-LLM signpost summary instead of the
+    // mechanical fallback. The stored `text` is read by the embedding
+    // model, not humans — 1–3 sentences of facts, every word a future
+    // search would use; evidence goes into metadata.detail (see
+    // README "Signpost summary with a host LLM").
+    let signpost = "客户 ACME 部署方案：选 B 版（自建集群），预算 80 万，决策人张三";
+    let memory_id = mem.after_turn(
+        "客户 ACME 部署方案定了吗?",
+        &fake_llm("客户 ACME 部署方案定了吗?", "(meeting transcript)"),
+        Some(vecmindb_client::AfterTurnOptions {
+            summary: Some(signpost.to_string()),
+            is_factual: true,
+        }),
+    )?;
+    println!("signpost stored: {}", memory_id.unwrap_or_else(|| "(skipped/failed)".into()));
+
     Ok(())
 }

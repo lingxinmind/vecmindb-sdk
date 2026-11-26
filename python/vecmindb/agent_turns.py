@@ -14,8 +14,9 @@ Invariants:
   neighbors, so clients carry zero threshold logic of their own.
 - Memory never breaks the agent: every call degrades to a no-op with a
   warning on network failure.
-- ``after_turn`` auto-summarizes (question + first 200 characters of the
-  reply) unless the caller supplies ``summary=``; ``summary=None`` skips
+- ``after_turn`` passes the full reply through (the server-side signpost
+  guard handles extraction & detail layering for over-long texts) unless
+  the caller supplies ``summary=``; ``summary=None`` skips
   the store entirely (empty chatter).
 """
 
@@ -27,8 +28,9 @@ from .memory import AsyncVecminMemorySpace, VecminMemorySpace
 
 logger = logging.getLogger("vecmindb.agent_turns")
 
-# Characters kept from the reply tail in an auto-generated summary.
-SUMMARY_CHAR_CAP = 200
+# [SUMMARY QUALITY L2] No client-side truncation: the full reply is passed
+# through to the server, whose signpost guard is the single authority for
+# extraction and detail layering of over-long texts.
 
 # The server report is human-readable: "1. [Score: 0.8213] ID: <id>"
 # followed by an indented "   Text: <content>" line per hit.
@@ -36,11 +38,8 @@ _SCORE_RE = re.compile(r"^\d+\. \[Score: ([\d.]+)\] ID: (\S+)")
 
 
 def auto_summary(question: str, reply: str) -> str:
-    """Builds the default stored summary: question + capped reply tail."""
-    tail = (reply or "").strip()
-    if len(tail) > SUMMARY_CHAR_CAP:
-        tail = tail[:SUMMARY_CHAR_CAP].rstrip() + "..."
-    return f"Q: {question.strip()}\nA: {tail}"
+    """Builds the stored memory text: question + the full reply (pass-through)."""
+    return f"Q: {question.strip()}\nA: {(reply or '').strip()}"
 
 
 def _parse_hits(report: str) -> List[Dict[str, Any]]:

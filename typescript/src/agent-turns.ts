@@ -16,23 +16,24 @@
  *   neighbors, so clients carry zero threshold logic.
  * - Memory never breaks the agent: every call degrades to a no-op with
  *   a warning on network failure.
- * - `afterTurn` auto-summarizes (question + first 200 characters of the
- *   reply) unless `options.summary` is set; `summary: null` skips the
+ * - `afterTurn` passes the full reply through (the server-side signpost
+ *   guard handles extraction & detail layering for over-long texts)
+ *   unless `options.summary` is set; `summary: null` skips the
  *   store entirely (empty chatter).
  */
 
 import { VecminMemorySpace, SpaceStoreOptions } from "./memory.js";
 
-/** Characters kept from the reply tail in an auto-generated summary. */
-const SUMMARY_CHAR_CAP = 200;
-
-/** Builds the default stored summary: question + capped reply tail. */
+/**
+ * [SUMMARY QUALITY L2] Builds the stored memory text: question + the full
+ * reply (pass-through, no truncation). Signpost quality is the server-side
+ * guard's single authority: over-long texts are rewritten extractively and
+ * the full original is layered into `metadata.detail` there. For the best
+ * signposts, pass a host-LLM summary via `options.summary` (see README
+ * "Signpost summary with a host LLM").
+ */
 export function autoSummary(question: string, reply: string): string {
-  let tail = (reply ?? "").trim();
-  if (tail.length > SUMMARY_CHAR_CAP) {
-    tail = tail.slice(0, SUMMARY_CHAR_CAP).trimEnd() + "...";
-  }
-  return `Q: ${question.trim()}\nA: ${tail}`;
+  return `Q: ${(question ?? "").trim()}\nA: ${(reply ?? "").trim()}`;
 }
 
 interface HitLike {

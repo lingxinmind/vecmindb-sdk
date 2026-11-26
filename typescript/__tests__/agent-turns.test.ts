@@ -1,7 +1,7 @@
 /**
  * Unit tests for the turn-loop memory primitives (AgentMemory).
  * Mirrors the Python semantics: relevance-gate empty context,
- * auto-truncated summary with override/skip, isFactual passthrough,
+ * full-reply pass-through with override/skip, isFactual passthrough,
  * and never-throws degradation.
  */
 
@@ -24,10 +24,11 @@ function spaceWith(report: unknown, storeResult = "mem-id-1"): VecminMemorySpace
 }
 
 describe("autoSummary", () => {
-  it("truncates the reply tail to the cap", () => {
+  it("passes the full reply through (no truncation)", () => {
     const s = autoSummary("question?", "x".repeat(500));
     expect(s.startsWith("Q: question?\nA: ")).toBe(true);
-    expect(s.split("A: ", 2)[1]!.length).toBeLessThanOrEqual(203);
+    // Signpost quality is the server-side guard's job — no client truncation.
+    expect(s.split("A: ", 2)[1]!.length).toBe(500);
   });
 
   it("is safe on empty replies", () => {
@@ -36,7 +37,7 @@ describe("autoSummary", () => {
 });
 
 describe("AgentMemory.afterTurn", () => {
-  it("auto-summarizes by default", async () => {
+  it("stores the full reply by default", async () => {
     const space = spaceWith("");
     const mem = new AgentMemory(space);
     const id = await mem.afterTurn("why slow?", "because hnsw_ef_search is low");
